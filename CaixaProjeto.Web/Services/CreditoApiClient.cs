@@ -30,4 +30,14 @@ public class CreditoApiClient(HttpClient httpClient)
         resposta.EnsureSuccessStatusCode();
         return (await resposta.Content.ReadFromJsonAsync<PedidoSubmetido>(Json, cancellationToken))!;
     }
+
+    public async Task<Pagina<PedidoResumo>> ListarAsync(Decisao? estado, int pagina, int tamanho, CancellationToken cancellationToken = default)
+    {
+        var url = $"/api/pedidos?pagina={pagina}&tamanho={tamanho}";
+        if (estado is not null)
+        {
+            url += $"&estado={estado}";
+        }
+        return (await httpClient.GetFromJsonAsync<Pagina<PedidoResumo>>(url, Json, cancellationToken))!;
+    }
 }

@@ -1,0 +1,132 @@
+@page "/pedidos"
+@rendermode InteractiveServer
+@using CaixaProjeto.Core.Contratos
+@using CaixaProjeto.Core.Dominio
+@using CaixaProjeto.Web.Services
+@inject CreditoApiClient Api
+
+<PageTitle>Pedidos</PageTitle>
+
+<h1>Pedidos de crédito</h1>
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <label class="text-muted" for="filtro-estado">Estado:</label>
+    <select id="filtro-estado" class="form-select w-auto" @onchange="MudarEstadoAsync">
+        <option value="">Todos</option>
+        @foreach (var decisao in Enum.GetValues<Decisao>())
+        {
+            <option value="@decisao">@decisao.Texto()</option>
+        }
+    </select>
+    <a class="btn btn-primary ms-auto" href="pedidos/novo">Novo pedido</a>
+</div>
+
+@if (erro is not null)
+{
+    <div class="alert alert-danger">@erro</div>
+}
+else if (pagina is null)
+{
+    <p class="text-muted">A carregar...</p>
+}
+else if (pagina.Total == 0)
+{
+    <div class="text-muted border rounded p-4">Ainda não há pedidos gravados com este estado.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle text-nowrap">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Data</th>
+                    <th>NIF</th>
+                    <th class="text-end">Valor</th>
+                    <th class="text-end">Prazo</th>
+                    <th class="text-end">Taxa de esforço</th>
+                    <th>Decisão automática</th>
+                    <th>Estado atual</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pedido in pagina.Itens)
+                {
+                    <tr>
+                        <td>@pedido.Numero</td>
+                        <td>@Formatos.DataHora(pedido.DataSubmissao)</td>
+                        <td>@(pedido.Nif ?? "-")</td>
+                        <td class="text-end">@Formatos.Euros(pedido.ValorPretendido)</td>
+                        <td class="text-end">@pedido.PrazoMeses meses</td>
+                        <td class="text-end">
+                            @if (pedido.TaxaEsforco is not null)
+                            {
+                                @Formatos.Percentagem(pedido.TaxaEsforco.Value)
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                        <td><span class="badge text-bg-@Formatos.CorDecisao(pedido.DecisaoAutomatica)">@pedido.DecisaoAutomatica.Texto()</span></td>
+                        <td><span class="badge text-bg-@Formatos.CorDecisao(pedido.EstadoAtual)">@pedido.EstadoAtual.Texto()</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-secondary btn-sm" disabled="@(pagina.NumeroPagina <= 1)" @onclick="() => IrParaPaginaAsync(pagina.NumeroPagina - 1)">Anterior</button>
+        <span>Página @pagina.NumeroPagina de @pagina.TotalPaginas (@pagina.Total pedidos)</span>
+        <button class="btn btn-outline-secondary btn-sm" disabled="@(pagina.NumeroPagina >= pagina.TotalPaginas)" @onclick="() => IrParaPaginaAsync(pagina.NumeroPagina + 1)">Seguinte</button>
+    </div>
+}
+
+@code {
+    private const int TamanhoPagina = 20;
+
+    private Pagina<PedidoResumo>? pagina;
+    private Decisao? estado;
+    private string? erro;
+
+    // Corre quando a página abre: carrega a primeira página sem filtro
+    protected override Task OnInitializedAsync()
+    {
+        return CarregarAsync(1);
+    }
+
+    private Task MudarEstadoAsync(ChangeEventArgs e)
+    {
+        var valor = e.Value?.ToString();
+        if (string.IsNullOrEmpty(valor))
+        {
+            estado = null;
+        }
+        else
+        {
+            estado = Enum.Parse<Decisao>(valor);
+        }
+        // Ao mudar o filtro, volta sempre à primeira página
+        return CarregarAsync(1);
+    }
+
+    private Task IrParaPaginaAsync(int numero)
+    {
+        return CarregarAsync(numero);
+    }
+
+    private async Task CarregarAsync(int numero)
+    {
+        erro = null;
+        try
+        {
+            pagina = await Api.ListarAsync(estado, numero, TamanhoPagina);
+        }
+        catch (HttpRequestException)
+        {
+            pagina = null;
+            erro = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+        }
+    }
+}

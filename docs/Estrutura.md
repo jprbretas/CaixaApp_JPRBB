@@ -45,11 +45,11 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 
 | Ficheiro | Para que serve |
 |---|---|
-| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula) e `POST /api/pedidos` (analisa e grava). |
+| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula), `POST /api/pedidos` (analisa e grava) e `GET /api/pedidos` (lista paginada, com filtro opcional `?estado=`). |
 | `appsettings.json` | Configuração: limites das regras e a ligação à BD (`ConnectionStrings:caixa`). |
 | `Data/Entidades.cs` | As tabelas: `Cliente`, `Pedido`, `MotivoPedido` e `HistoricoEstado`. |
 | `Data/CaixaDbContext.cs` | A "porta" para a BD (EF Core). Define índices (NIF e número únicos), grava os enums como texto e os decimais como número. |
-| `Services/PedidoService.cs` | Junta motor e BD: analisa o pedido, atribui o número (ano + sequência, ex. 20260001), liga-o ao cliente pelo NIF e grava motivos e histórico. |
+| `Services/PedidoService.cs` | Junta motor e BD: analisa o pedido, atribui o número (ano + sequência, ex. 20260001), liga-o ao cliente pelo NIF e grava motivos e histórico. `ListarAsync` devolve uma página da lista, do mais recente para o mais antigo. |
 | `caixa.db` | O ficheiro SQLite. É criado no primeiro arranque (`EnsureCreated`) e não vai para o git. Apagar = recomeçar do zero. |
 
 ### Modelo de dados
@@ -75,7 +75,7 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 | Ficheiro | Para que serve |
 |---|---|
 | `Program.cs` | Arranque da Web. Regista o `CreditoApiClient` com o endereço `https+http://apiservice`, que o Aspire traduz para o endereço real da API. |
-| `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`) e gravar (`SubmeterAsync`). |
+| `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`), gravar (`SubmeterAsync`) e listar (`ListarAsync`). |
 | `Models/PedidoForm.cs` | Modelo do formulário (com `set`, porque o Blazor precisa) e os cenários A a D para preencher num clique. |
 | `Components/App.razor` | A página HTML "mãe": carrega o Bootstrap, o CSS e o script do Blazor. |
 | `Components/Routes.razor` | Diz ao Blazor para encontrar as páginas pelo `@page` e usar o `MainLayout`. |
@@ -84,6 +84,7 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 | `Components/Layout/NavMenu.razor` | O menu lateral. |
 | `Components/Pages/Home.razor` | Página inicial (`/`). |
 | `Components/Pages/NovoPedido.razor` | Formulário do pedido e resultado (`/pedidos/novo`). "Analisar" só simula; "Submeter pedido" grava e mostra o número. É `InteractiveServer`: os cliques são tratados no servidor através de uma ligação em tempo real (SignalR). |
+| `Components/Pages/Pedidos.razor` | Lista dos pedidos gravados (`/pedidos`): tabela com 20 por página, botões Anterior/Seguinte e filtro por estado atual. |
 | `Components/Shared/ResultadoView.razor` | Cartão reutilizável com decisão, motivos e indicadores. |
-| `Components/Shared/Formatos.cs` | Formatação "1.234,56 €", percentagens e a cor de cada decisão. |
+| `Components/Shared/Formatos.cs` | Formatação "1.234,56 €", percentagens, datas (de UTC para a hora local) e a cor de cada decisão. |
 | `wwwroot/` | Ficheiros estáticos: `app.css`, Bootstrap e favicon. |

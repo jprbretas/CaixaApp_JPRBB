@@ -18,6 +18,13 @@ public static class Formatos
 
     public static string Anos(decimal valor) => valor.ToString("0.#", Pt) + " anos";
 
+    /// <summary>
+    /// Data e hora à portuguesa, na hora local. A BD guarda as datas em UTC, mas o SQLite
+    /// não guarda essa informação, por isso dizemos explicitamente que a data é UTC antes de converter.
+    /// </summary>
+    public static string DataHora(DateTime dataUtc) =>
+        DateTime.SpecifyKind(dataUtc, DateTimeKind.Utc).ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+
     /// <summary>Classe Bootstrap da cor de cada decisão.</summary>
     public static string CorDecisao(Decisao decisao) => decisao switch
     {

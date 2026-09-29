@@ -59,6 +59,50 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
         return new PedidoSubmetido(pedido.Numero, resultado);
     }
 
+    /// <summary>
+    /// Uma página da lista de pedidos, do mais recente para o mais antigo.
+    /// Se vier um estado, mostra só os pedidos que estão nesse estado.
+    /// </summary>
+    public async Task<Pagina<PedidoResumo>> ListarAsync(Decisao? estado, int numeroPagina, int tamanhoPagina, CancellationToken ct = default)
+    {
+        // Proteção contra valores sem sentido vindos do URL (?pagina=0, ?tamanho=5000)
+        if (numeroPagina < 1)
+        {
+            numeroPagina = 1;
+        }
+        if (tamanhoPagina < 1 || tamanhoPagina > 100)
+        {
+            tamanhoPagina = 20;
+        }
+
+        // A query só é enviada à BD no CountAsync / ToListAsync; até lá vamos só construindo-a
+        IQueryable<Pedido> query = db.Pedidos;
+        if (estado is not null)
+        {
+            query = query.Where(p => p.EstadoAtual == estado);
+        }
+
+        var total = await query.CountAsync(ct);
+
+        var itens = await query
+            .OrderByDescending(p => p.DataSubmissao)
+            .ThenByDescending(p => p.Numero)
+            .Skip((numeroPagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .Select(p => new PedidoResumo(
+                p.Numero,
+                p.Nif,
+                p.ValorPretendido,
+                p.PrazoMeses,
+                p.TaxaEsforco,
+                p.DecisaoAutomatica,
+                p.EstadoAtual,
+                p.DataSubmissao))
+            .ToListAsync(ct);
+
+        return new Pagina<PedidoResumo>(itens, total, numeroPagina, tamanhoPagina);
+    }
+
     /// <summary>Número legível: ano + sequência de 4 dígitos (20260001, 20260002, ...).</summary>
     private async Task<string> ProximoNumeroAsync(int ano, CancellationToken ct)
     {

@@ -21,3 +21,9 @@ Content-Type: application/json
 }
 
 ###
+
+# Lista de pedidos gravados: só os que estão em análise manual, primeira página
+GET {{ApiService_HostAddress}}/api/pedidos?estado=AnaliseManual&pagina=1&tamanho=20
+Accept: application/json
+
+###

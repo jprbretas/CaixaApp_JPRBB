@@ -59,6 +59,12 @@ app.MapPost("/api/pedidos", async (PedidoCredito pedido, PedidoService servico, 
         await servico.SubmeterAsync(pedido, ct))
     .WithName("SubmeterPedido");
 
+// Lista paginada dos pedidos gravados, com filtro opcional por estado atual.
+// Exemplo: GET /api/pedidos?estado=AnaliseManual&pagina=2&tamanho=10
+app.MapGet("/api/pedidos", async (Decisao? estado, int? pagina, int? tamanho, PedidoService servico, CancellationToken ct) =>
+        await servico.ListarAsync(estado, pagina ?? 1, tamanho ?? 20, ct))
+    .WithName("ListarPedidos");
+
 app.MapDefaultEndpoints();
 
 app.Run();
