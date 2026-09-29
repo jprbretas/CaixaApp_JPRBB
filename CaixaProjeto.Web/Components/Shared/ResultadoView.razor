@@ -1,0 +1,53 @@
+@* Mostra o resultado de uma análise: decisão final, motivos e indicadores (secção "Resultado Esperado"). *@
+@using CaixaProjeto.Core.Dominio
+
+<div class="card border-@Formatos.CorDecisao(Resultado.Decisao)">
+    <div class="card-header bg-@Formatos.CorDecisao(Resultado.Decisao) bg-opacity-25">
+        <small class="text-muted">Decisão final</small>
+        <div class="fs-4 fw-bold">@Resultado.Decisao.Texto()</div>
+    </div>
+
+    <div class="card-body">
+        <h6>Motivos</h6>
+        @if (Resultado.Motivos.Count == 0)
+        {
+            <p class="text-muted">Nenhuma regra levantou objeções.</p>
+        }
+        else
+        {
+            <ul class="list-unstyled">
+                @foreach (var motivo in Resultado.Motivos)
+                {
+                    <li class="mb-1">
+                        <span class="badge bg-@Formatos.CorDecisao(motivo.Decisao)">Regra @motivo.Regra</span>
+                        @motivo.Descricao
+                        <small class="text-muted">(@motivo.Decisao.Texto())</small>
+                    </li>
+                }
+            </ul>
+        }
+
+        <h6 class="mt-3">Indicadores</h6>
+        @if (Resultado.Indicadores is { } ind)
+        {
+            <dl class="row mb-0">
+                <dt class="col-7">Prestação estimada</dt>
+                <dd class="col-5 text-end">@Formatos.Euros(ind.PrestacaoEstimada)</dd>
+                <dt class="col-7">Taxa de esforço</dt>
+                <dd class="col-5 text-end">@Formatos.Percentagem(ind.TaxaEsforco)</dd>
+                <dt class="col-7">Idade no fim do contrato</dt>
+                <dd class="col-5 text-end">@Formatos.Anos(ind.IdadeFinalContrato)</dd>
+                <dt class="col-7">Montante máximo recomendado</dt>
+                <dd class="col-5 text-end">@Formatos.Euros(ind.LimiteMontante)</dd>
+            </dl>
+        }
+        else
+        {
+            <p class="text-muted mb-0">Não calculados: o pedido é inválido.</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ResultadoAnalise Resultado { get; set; } = default!;
+}

@@ -1,0 +1,89 @@
+# Estrutura da solução
+
+Guia rápido dos ficheiros que criámos, para que servem e como se ligam. Vai sendo atualizado a cada passo.
+
+## Como os projetos se ligam
+
+```
+Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.ApiService ──► CaixaProjeto.Core (regras)
+                    ▲                                  ▲
+                    └──────── CaixaProjeto.AppHost arranca os dois e liga-os ──┘
+```
+
+- O utilizador só fala com a **Web**.
+- A Web pede a análise à **API** por HTTP.
+- A API usa o **Core**, que é onde vivem as regras de negócio.
+- O **AppHost** (Aspire) arranca tudo com um F5.
+
+## Projetos
+
+| Projeto | Para que serve |
+|---|---|
+| `CaixaProjeto.AppHost` | "Arrancador" do Aspire. Define que existem dois serviços (`apiservice` e `webfrontend`) e que a Web depende da API. Abre também o dashboard do Aspire com logs e estado. **É o projeto de arranque.** |
+| `CaixaProjeto.ServiceDefaults` | Configuração comum aos serviços: logs/telemetria, health checks (`/health`), resiliência e service discovery (encontrar a API pelo nome). Não mexemos nele. |
+| `CaixaProjeto.Core` | O domínio e o motor de decisão. Não depende de web nem de BD, por isso é fácil de testar. |
+| `CaixaProjeto.ApiService` | API HTTP. Recebe pedidos em JSON, chama o motor, grava na BD SQLite e devolve o resultado. |
+| `CaixaProjeto.Web` | A aplicação Blazor (o ecrã). |
+| `CaixaProjeto.UnitTests` | Testes unitários do motor (só o Core): cenários A a D, Regra 1, valores-limite e prioridades. Correm em menos de 1 segundo. |
+| `CaixaProjeto.Tests` | Teste de integração: arranca a app inteira pelo Aspire e confirma que a página inicial responde. Mais lento. |
+
+## CaixaProjeto.Core
+
+| Ficheiro | Para que serve |
+|---|---|
+| `Dominio/Enums.cs` | `SituacaoProfissional` e `Decisao`. A decisão tem um número que é a severidade: é isso que permite à Regra 8 escolher "a mais restritiva" com um simples máximo. Também tem os textos para o ecrã ("ANÁLISE MANUAL"...). |
+| `Dominio/PedidoCredito.cs` | Os 8 campos de entrada do enunciado. |
+| `Dominio/ResultadoAnalise.cs` | O que sai da análise: `Decisao`, lista de `Motivo` (regra + descrição + decisão pedida) e `Indicadores`. |
+| `Dominio/ParametrosRegras.cs` | Os limites (18, 75, 20×, 35%, 50%, 50.000 €). Os valores vêm do `appsettings.json` da API. |
+| `Regras/ValidacaoInicial.cs` | Regra 1. Junta todos os erros de uma vez. |
+| `Regras/CalculoIndicadores.cs` | Prestação, taxa de esforço, idade no fim do contrato, limite de montante. |
+| `Dominio/ResultadoAnalise.cs` → `PedidoSubmetido` | O que a API devolve ao gravar: número do pedido + resultado. Está no Core porque a API e a Web partilham este "contrato". |
+| `Regras/RegrasNegocio.cs` | Interface `IRegra` e uma classe por regra, da 2 à 7. Para acrescentar uma regra nova, cria-se mais uma classe. |
+| `MotorDecisao.cs` | O ponto de entrada: valida, calcula, corre as regras e aplica a Regra 8. |
+
+## CaixaProjeto.ApiService
+
+| Ficheiro | Para que serve |
+|---|---|
+| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula) e `POST /api/pedidos` (analisa e grava). |
+| `appsettings.json` | Configuração: limites das regras e a ligação à BD (`ConnectionStrings:caixa`). |
+| `Data/Entidades.cs` | As tabelas: `Cliente`, `Pedido`, `MotivoPedido` e `HistoricoEstado`. |
+| `Data/CaixaDbContext.cs` | A "porta" para a BD (EF Core). Define índices (NIF e número únicos), grava os enums como texto e os decimais como número. |
+| `Services/PedidoService.cs` | Junta motor e BD: analisa o pedido, atribui o número (ano + sequência, ex. 20260001), liga-o ao cliente pelo NIF e grava motivos e histórico. |
+| `caixa.db` | O ficheiro SQLite. É criado no primeiro arranque (`EnsureCreated`) e não vai para o git. Apagar = recomeçar do zero. |
+
+### Modelo de dados
+
+```
+Clientes         (Id, Nif UNIQUE, DataRegisto)
+Pedidos          (Id, Numero UNIQUE, ClienteId → Clientes (pode ser NULL se o NIF for inválido),
+                  Nif, Idade, RendimentoMensalLiquido, PrestacoesAtuais, ValorPretendido, PrazoMeses,
+                  SituacaoProfissional, IncidentesCredito,
+                  PrestacaoEstimada, TaxaEsforco, IdadeFinalContrato,
+                  DecisaoAutomatica, EstadoAtual, DataSubmissao)
+MotivosPedido    (Id, PedidoId → Pedidos, Regra, Descricao, Decisao)
+HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Utilizador, Observacao)
+```
+
+- `DecisaoAutomatica` é a do motor e nunca muda. `EstadoAtual` pode mudar quando um analista decide.
+- Cada mudança de estado fica em `HistoricoEstados`. É daí que sai "quantos pedidos passaram de ANÁLISE MANUAL a APROVADO".
+- Os pedidos inválidos também são gravados, para auditoria e reporting.
+| `CaixaProjeto.ApiService.http` | Pedidos de exemplo que se podem enviar diretamente do Visual Studio (botão "Send request"). |
+
+## CaixaProjeto.Web
+
+| Ficheiro | Para que serve |
+|---|---|
+| `Program.cs` | Arranque da Web. Regista o `CreditoApiClient` com o endereço `https+http://apiservice`, que o Aspire traduz para o endereço real da API. |
+| `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`) e gravar (`SubmeterAsync`). |
+| `Models/PedidoForm.cs` | Modelo do formulário (com `set`, porque o Blazor precisa) e os cenários A a D para preencher num clique. |
+| `Components/App.razor` | A página HTML "mãe": carrega o Bootstrap, o CSS e o script do Blazor. |
+| `Components/Routes.razor` | Diz ao Blazor para encontrar as páginas pelo `@page` e usar o `MainLayout`. |
+| `Components/_Imports.razor` | `@using` partilhados por todos os componentes. |
+| `Components/Layout/MainLayout.razor` | Moldura de todas as páginas: menu à esquerda, barra em cima, conteúdo no meio. |
+| `Components/Layout/NavMenu.razor` | O menu lateral. |
+| `Components/Pages/Home.razor` | Página inicial (`/`). |
+| `Components/Pages/NovoPedido.razor` | Formulário do pedido e resultado (`/pedidos/novo`). "Analisar" só simula; "Submeter pedido" grava e mostra o número. É `InteractiveServer`: os cliques são tratados no servidor através de uma ligação em tempo real (SignalR). |
+| `Components/Shared/ResultadoView.razor` | Cartão reutilizável com decisão, motivos e indicadores. |
+| `Components/Shared/Formatos.cs` | Formatação "1.234,56 €", percentagens e a cor de cada decisão. |
+| `wwwroot/` | Ficheiros estáticos: `app.css`, Bootstrap e favicon. |

@@ -1,0 +1,23 @@
+@ApiService_HostAddress = http://localhost:5509
+
+GET {{ApiService_HostAddress}}/
+Accept: text/plain
+
+###
+
+# Cenário B do enunciado: espera-se ANÁLISE MANUAL
+POST {{ApiService_HostAddress}}/api/pedidos/preanalise
+Content-Type: application/json
+
+{
+  "nif": "123456789",
+  "idade": 42,
+  "rendimentoMensalLiquido": 2000,
+  "prestacoesAtuais": 500,
+  "valorPretendido": 20000,
+  "prazoMeses": 48,
+  "situacaoProfissional": "ContratoPrazo",
+  "incidentesCredito": false
+}
+
+###

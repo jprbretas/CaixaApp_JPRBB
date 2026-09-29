@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="CaixaProjeto.ApiService/CaixaProjeto.ApiService.csproj" />
+  <Project Path="CaixaProjeto.AppHost/CaixaProjeto.AppHost.csproj" />
+  <Project Path="CaixaProjeto.Core/CaixaProjeto.Core.csproj" />
+  <Project Path="CaixaProjeto.ServiceDefaults/CaixaProjeto.ServiceDefaults.csproj" />
+  <Project Path="CaixaProjeto.Tests/CaixaProjeto.Tests.csproj" />
+  <Project Path="CaixaProjeto.UnitTests/CaixaProjeto.UnitTests.csproj" />
+  <Project Path="CaixaProjeto.Web/CaixaProjeto.Web.csproj" />
+</Solution>

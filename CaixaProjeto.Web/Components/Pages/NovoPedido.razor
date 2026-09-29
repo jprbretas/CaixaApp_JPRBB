@@ -1,0 +1,160 @@
+@page "/pedidos/novo"
+@rendermode InteractiveServer
+@using CaixaProjeto.Core.Dominio
+@using CaixaProjeto.Web.Models
+@using CaixaProjeto.Web.Services
+@inject CreditoApiClient Api
+
+<PageTitle>Novo pedido</PageTitle>
+
+<h1>Novo pedido de crédito</h1>
+
+<div class="mb-3">
+    <span class="me-2 text-muted">Preencher com o cenário:</span>
+    @foreach (var nome in PedidoForm.Cenarios.Keys)
+    {
+        <button type="button" class="btn btn-outline-secondary btn-sm me-1" @onclick="() => Preencher(nome)">@nome</button>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <EditForm Model="form" OnSubmit="AnalisarAsync" FormName="novo-pedido">
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label">NIF</label>
+                    <InputText class="form-control" @bind-Value="form.Nif" maxlength="9" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Idade</label>
+                    <InputNumber class="form-control" @bind-Value="form.Idade" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Rendimento mensal líquido (€)</label>
+                    <InputNumber class="form-control" @bind-Value="form.RendimentoMensalLiquido" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Prestações atuais (€)</label>
+                    <InputNumber class="form-control" @bind-Value="form.PrestacoesAtuais" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Valor pretendido (€)</label>
+                    <InputNumber class="form-control" @bind-Value="form.ValorPretendido" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Prazo (meses)</label>
+                    <InputNumber class="form-control" @bind-Value="form.PrazoMeses" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Situação profissional</label>
+                    <InputSelect class="form-select" @bind-Value="form.SituacaoProfissional">
+                        <option value="">(escolher)</option>
+                        @foreach (var situacao in Enum.GetValues<SituacaoProfissional>())
+                        {
+                            <option value="@situacao">@situacao.Texto()</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Incidentes de crédito</label>
+                    <InputSelect class="form-select" @bind-Value="form.IncidentesCredito">
+                        <option value="false">Não</option>
+                        <option value="true">Sim</option>
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                @* "Analisar" só simula; "Submeter pedido" analisa e grava na BD *@
+                <button type="submit" class="btn btn-outline-primary" disabled="@aTrabalhar">Analisar</button>
+                <button type="button" class="btn btn-primary" disabled="@aTrabalhar" @onclick="SubmeterAsync">Submeter pedido</button>
+                <button type="button" class="btn btn-link" @onclick="Limpar">Limpar</button>
+            </div>
+        </EditForm>
+    </div>
+
+    <div class="col-lg-6">
+        @if (erro is not null)
+        {
+            <div class="alert alert-danger">@erro</div>
+        }
+        else if (resultado is not null)
+        {
+            @if (numeroGravado is not null)
+            {
+                <div class="alert alert-success">Pedido <strong>@numeroGravado</strong> gravado.</div>
+            }
+            else
+            {
+                <div class="alert alert-light border">Simulação: o pedido ainda não foi gravado.</div>
+            }
+            <ResultadoView Resultado="resultado" />
+        }
+        else
+        {
+            <div class="text-muted border rounded p-4">
+                Preencha o pedido (ou escolha um cenário) e carregue em <strong>Analisar</strong> para simular,
+                ou em <strong>Submeter pedido</strong> para gravar.
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private PedidoForm form = new();
+    private ResultadoAnalise? resultado;
+    private string? numeroGravado;
+    private string? erro;
+    private bool aTrabalhar;
+
+    private void Preencher(string cenario)
+    {
+        form = PedidoForm.Cenarios[cenario].Copia();
+        LimparResultado();
+    }
+
+    private void Limpar()
+    {
+        form = new();
+        LimparResultado();
+    }
+
+    private void LimparResultado()
+    {
+        resultado = null;
+        numeroGravado = null;
+        erro = null;
+    }
+
+    private Task AnalisarAsync() => ChamarApiAsync(async () =>
+    {
+        resultado = await Api.PreAnalisarAsync(form.ParaPedido());
+    });
+
+    private Task SubmeterAsync() => ChamarApiAsync(async () =>
+    {
+        var submetido = await Api.SubmeterAsync(form.ParaPedido());
+        resultado = submetido.Resultado;
+        numeroGravado = submetido.Numero;
+    });
+
+    // Trata o "a trabalhar" e os erros de ligação da mesma forma para os dois botões
+    private async Task ChamarApiAsync(Func<Task> chamada)
+    {
+        LimparResultado();
+        aTrabalhar = true;
+        try
+        {
+            await chamada();
+        }
+        catch (HttpRequestException)
+        {
+            LimparResultado();
+            erro = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+        }
+        finally
+        {
+            aTrabalhar = false;
+        }
+    }
+}
