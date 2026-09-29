@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CaixaProjeto.Core.Contratos;
 using CaixaProjeto.Core.Dominio;
 
 namespace CaixaProjeto.Web.Services;

@@ -1,5 +1,6 @@
 using CaixaProjeto.ApiService.Data;
 using CaixaProjeto.Core;
+using CaixaProjeto.Core.Contratos;
 using CaixaProjeto.Core.Dominio;
 using CaixaProjeto.Core.Regras;
 using Microsoft.EntityFrameworkCore;
