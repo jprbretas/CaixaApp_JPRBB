@@ -92,13 +92,37 @@ public class MotorDecisaoTests
     [InlineData("12345678")]    // 8 dígitos
     [InlineData("1234567890")]  // 10 dígitos
     [InlineData("12345678A")]   // letra
-    [InlineData("123 45678")]   // espaço
+    [InlineData("123 45678")]   // sem o espaço fica com 8 dígitos
+    [InlineData("   ")]         // só espaços
+    [InlineData("PT123456789")] // letras não são separadores
     public void Regra1_NifSemNoveDigitos_Invalido(string? nif)
     {
         var r = motor.Analisar(PedidoAprovado with { Nif = nif });
 
         Assert.Equal(Decisao.PedidoInvalido, r.Decisao);
         Assert.Null(r.Indicadores);
+    }
+
+    [Theory]
+    [InlineData("123 456 789")]     // como se escreve à mão
+    [InlineData("123-456-789")]
+    [InlineData("123.456.789")]
+    [InlineData(" 123456789 ")]
+    public void Regra1_NifComEspacosPontosOuHifenes_Valido(string nif)
+    {
+        Assert.Equal(Decisao.Aprovado, motor.Analisar(PedidoAprovado with { Nif = nif }).Decisao);
+    }
+
+    [Fact]
+    public void Normalizado_TiraSoOsSeparadores_ENaoMudaOResto()
+    {
+        var pedido = PedidoAprovado with { Nif = " 123 456-789. " };
+
+        var normalizado = pedido.Normalizado();
+
+        Assert.Equal("123456789", normalizado.Nif);
+        Assert.Equal(pedido with { Nif = "123456789" }, normalizado);   // os outros campos ficam iguais
+        Assert.Null((PedidoAprovado with { Nif = null }).Normalizado().Nif);
     }
 
     [Fact]

@@ -160,10 +160,10 @@ else
         {
             detalhe = await Api.ObterAsync(Numero);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
             detalhe = null;
-            erro = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+            erro = MensagensErro.Para(ex);
         }
         carregado = true;
     }
@@ -201,9 +201,9 @@ else
             }
             observacao = "";
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            erroDecisao = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+            erroDecisao = MensagensErro.Para(ex);
         }
         finally
         {

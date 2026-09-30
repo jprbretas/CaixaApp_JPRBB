@@ -48,7 +48,7 @@ decisão; segui a do enunciado.
 |---|---|
 | Prestações atuais negativas | Pedido inválido. |
 | Situação profissional em falta | Pedido inválido. |
-| O enunciado só pede 9 dígitos no NIF | Validei só os 9 dígitos (sem o dígito de controlo) e guardei o NIF como texto, para não perder zeros à esquerda. |
+| O enunciado só pede 9 dígitos no NIF | Validei só os 9 dígitos (sem o dígito de controlo) e guardei o NIF como texto, para não perder zeros à esquerda. Espaços, pontos e hífenes são aceites e retirados ("123 456 789"). |
 | Valores exatamente nos limites (75 anos, 20×, 35%, 50%, 50.000 €) | Li as palavras do enunciado: "superior a" e "exceder" são estritamente maior; "até 35%" e "até 50%" incluem o limite. |
 | Arredondamentos | A prestação e a taxa são arredondadas a 2 casas antes de comparar, para o valor mostrado ser o que decide. |
 | Idade no fim do contrato | Idade atual + prazo em anos, com a fração (70 anos + 61 meses = 75,08, que passa os 75). |
@@ -96,6 +96,8 @@ Critérios de aceitação:
   **então** RECUSADO pela taxa de esforço, com o motivo do montante acima do limite também visível.
 - **Dado** um pedido com vários dados inválidos, **quando** submeto, **então** a decisão é PEDIDO
   INVÁLIDO e vejo todos os erros de uma vez.
+- **Dado** um NIF escrito com espaços ("123 456 789"), **quando** submeto, **então** é aceite e
+  gravado sem os espaços.
 - **Quando** submeto, **então** o pedido fica gravado com um número (ano + sequência, por exemplo
   20260001).
 

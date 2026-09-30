@@ -7,4 +7,5 @@
   <Project Path="CaixaProjeto.Tests/CaixaProjeto.Tests.csproj" />
   <Project Path="CaixaProjeto.UnitTests/CaixaProjeto.UnitTests.csproj" />
   <Project Path="CaixaProjeto.Web/CaixaProjeto.Web.csproj" />
+  <Project Path="CaixaProjeto.WebTests/CaixaProjeto.WebTests.csproj" />
 </Solution>

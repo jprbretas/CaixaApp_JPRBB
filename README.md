@@ -28,7 +28,7 @@ dotnet run --project CaixaProjeto.AppHost
 
 O endereço do dashboard aparece no terminal.
 
-**Testes** (71: 30 das regras, 40 da API e da base de dados, 1 da aplicação inteira):
+**Testes** (89: 37 das regras, 41 da API e da base de dados, 10 da Web, 1 da aplicação inteira):
 
 ```bash
 dotnet test CaixaProjeto.slnx
@@ -74,4 +74,4 @@ dotnet test CaixaProjeto.slnx
 | `CaixaProjeto.Web` | As páginas (Blazor). Fala só com a API. |
 | `CaixaProjeto.AppHost` | Arranca a API e a Web e liga-as (Aspire). |
 | `CaixaProjeto.ServiceDefaults` | Configuração comum: logs, health checks, service discovery. |
-| `CaixaProjeto.UnitTests` / `ApiTests` / `Tests` | Testes das regras / da API e da base de dados / da aplicação inteira. |
+| `CaixaProjeto.UnitTests` / `ApiTests` / `WebTests` / `Tests` | Testes das regras / da API e da base de dados / do cliente HTTP da Web / da aplicação inteira. |

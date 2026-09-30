@@ -79,6 +79,16 @@ melhoria a fazer: a página devia aceitar o NIF com espaços, ou explicar melhor
 hipóteses 2, 4 e 6 mostram também que a mensagem "Não foi possível contactar a API" é demasiado
 genérica (ver as melhorias na [Tarefa 5](Tarefa5_Melhoria_da_Solucao.md)).
 
+**O que mudou depois desta análise.** Esta análise levou a três correções na aplicação (passo 14,
+descrito no [DECISIONS.md](../DECISIONS.md#melhorias-depois-da-tarefa-6)):
+
+- o NIF passou a ser aceite com espaços, pontos ou hífenes;
+- o campo do NIF deixava escrever só 9 caracteres, por isso nem era possível escrever
+  "123 456 789" (o browser cortava-o); passou a aceitar 15;
+- "a API não responde" e "a API respondeu com um erro" passaram a ter mensagens diferentes, e a
+  segunda mostra o código do erro, que o suporte procura nos logs. Com isso, parte do passo 3 da
+  secção 2 (procurar nos logs) fica mais rápida: basta o cliente enviar o código que viu.
+
 ---
 
 ## 4. Equipas a envolver

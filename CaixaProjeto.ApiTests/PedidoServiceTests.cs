@@ -80,6 +80,20 @@ public sealed class PedidoServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Submeter_NifComEspacos_GravaONifLimpo_EOMesmoCliente()
+    {
+        await bd.Servico().SubmeterAsync(Exemplos.Aprovado with { Nif = "123 456 789" });
+        await bd.Servico().SimularAsync(Exemplos.Aprovado with { Nif = "123-456-789" });
+        await bd.Servico().SubmeterAsync(Exemplos.Aprovado with { Nif = "123456789" });
+
+        using var db = bd.NovoContexto();
+        var cliente = await db.Clientes.SingleAsync();                // um só cliente para as três formas
+        Assert.Equal("123456789", cliente.Nif);
+        Assert.All(await db.Pedidos.ToListAsync(), p => Assert.Equal("123456789", p.Nif));
+        Assert.Equal("123456789", (await db.Simulacoes.SingleAsync()).Nif);
+    }
+
+    [Fact]
     public async Task Submeter_PedidoInvalido_GravaSemClienteESemIndicadores()
     {
         var submetido = await bd.Servico().SubmeterAsync(Exemplos.Invalido);

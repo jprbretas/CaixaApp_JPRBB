@@ -18,6 +18,7 @@ resposta a cada tarefa do enunciado.
 [Simulações](#simulações) ·
 [Decisão do analista](#decisão-do-analista) ·
 [Consultas da Tarefa 4](#consultas-da-tarefa-4) ·
+[Melhorias depois da Tarefa 6](#melhorias-depois-da-tarefa-6) ·
 [Estilo do código](#estilo-do-código) ·
 [Como foi desenvolvido](#como-foi-desenvolvido) ·
 [Limitações conhecidas](#limitações-conhecidas)
@@ -28,7 +29,7 @@ resposta a cada tarefa do enunciado.
 
 1. **O motor de decisão vive num projeto próprio (`CaixaProjeto.Core`), sem web nem base de
    dados.** As regras de negócio não dependem de nada, por isso são testadas em menos de um segundo
-   (30 testes) e podem ser usadas por qualquer canal: as páginas, a API, ou outro sistema no futuro.
+   (37 testes) e podem ser usadas por qualquer canal: as páginas, a API, ou outro sistema no futuro.
    [Detalhes](#arquitetura)
 2. **Todas as regras são avaliadas e a decisão final é a mais restritiva.** Cada decisão tem um
    número de severidade (APROVADO 0, ANÁLISE MANUAL 1, RECUSADO 2, PEDIDO INVÁLIDO 3), e a Regra 8
@@ -80,6 +81,7 @@ e Web. Acrescentei o `Core` e o `UnitTests`.
 | `ServiceDefaults` | Veio com o modelo e não foi alterado: logs, health checks, tentativas repetidas e service discovery. |
 | `UnitTests` | Testes do motor, só o Core. |
 | `ApiTests` | Testes do serviço, da base de dados, dos endpoints da API e das consultas SQL da Tarefa 4. |
+| `WebTests` | Testes do cliente HTTP da Web e das mensagens de erro das páginas. |
 | `Tests` | Teste que arranca a aplicação inteira pelo Aspire (veio com o modelo). |
 
 **Porquê projetos separados e não pastas.** Num projeto único (como no MVC tradicional) a
@@ -112,7 +114,7 @@ nome a cada serviço e o service discovery do Aspire traduz esse nome para o end
 
 | Regra | Interpretação |
 |---|---|
-| 1. Validação inicial | As cinco validações do enunciado, mais duas que também tornam o pedido impossível de analisar: prestações atuais negativas e situação profissional em falta. **Junta todos os erros de uma vez**, para o cliente os corrigir todos, em vez de os descobrir um a um. |
+| 1. Validação inicial | As cinco validações do enunciado, mais duas que também tornam o pedido impossível de analisar: prestações atuais negativas e situação profissional em falta. **Junta todos os erros de uma vez**, para o cliente os corrigir todos, em vez de os descobrir um a um. Antes de validar, tira ao NIF os espaços, pontos e hífenes ("123 456 789" é válido). |
 | 2. Idade no fim do contrato | Idade atual + prazo em anos (prazo ÷ 12). Exatamente 75 anos não dispara; 75,08 já vai a ANÁLISE MANUAL ("superior a 75"). |
 | 3. Incidentes | Com incidentes registados: RECUSADO. |
 | 4. Situação profissional | Efetivo prossegue, contrato a prazo vai a ANÁLISE MANUAL, desempregado é RECUSADO. |
@@ -140,7 +142,7 @@ de negócio:
 |---|---|---|
 | Prestações atuais negativas | Pedido inválido | Confirmam? |
 | Situação profissional em falta | Pedido inválido | Há outras situações (reformado, independente...)? |
-| NIF | Validar só os 9 dígitos, guardado como texto para não perder zeros à esquerda | Deve validar-se também o dígito de controlo? |
+| NIF | Validar só os 9 dígitos, guardado como texto para não perder zeros à esquerda; espaços, pontos e hífenes são aceites e retirados | Deve validar-se também o dígito de controlo? E o prefixo "PT"? |
 | Idade no fim do contrato | Idade + prazo ÷ 12, sem arredondar | A idade conta em anos completos ou com a fração do último ano? |
 | Regra 7 contra uma recusa | A recusa prevalece | "Independentemente das restantes regras" quer dizer "no mínimo análise manual" ou "sempre análise manual, mesmo que outra regra recuse"? |
 | Taxa de esforço sem juros | Como o enunciado manda | Em produção, que taxa de juro e que fórmula de prestação usar? |
@@ -150,7 +152,7 @@ de negócio:
 
 ## Testes
 
-**30 testes unitários do motor** (`CaixaProjeto.UnitTests/MotorDecisaoTests.cs`), sem web nem base
+**37 testes unitários do motor** (`CaixaProjeto.UnitTests/MotorDecisaoTests.cs`), sem web nem base
 de dados. Cada teste parte de um pedido aprovado e muda só o campo que interessa, para ficar claro
 que é essa mudança que provoca o resultado.
 
@@ -163,15 +165,15 @@ que é essa mudança que provoca o resultado.
   | C | 208,33 € | 16,94% | **RECUSADO** | incidentes de crédito (Regra 3) |
   | D | 694,44 € | 82,87% | **RECUSADO** | taxa acima de 50% (Regra 6); montante acima de 20× o rendimento (Regra 5) |
 
-- **Regra 1:** NIF com 8 ou 10 dígitos, com letras, com espaços ou vazio; NIF com zero à esquerda
-  é válido; 18 anos é válido e 17 não; valores a zero; os dois casos não previstos; e que os erros
+- **Regra 1:** NIF com 8 ou 10 dígitos, com letras ou vazio; NIF com zero à esquerda é válido, e
+  também escrito com espaços, pontos ou hífenes; 18 anos é válido e 17 não; valores a zero; os dois casos não previstos; e que os erros
   são todos juntos e as outras regras não chegam a correr.
 - **Valores-limite** das regras 2, 5, 6 e 7 (exatamente no limite e logo acima).
 - **Regra 8:** a Regra 7 não anula uma recusa; com várias regras a disparar, ficam todos os motivos
   e a decisão mais restritiva.
 - **Parâmetros:** mudar um limite na configuração muda a decisão.
 
-**40 testes da API e da base de dados** (`CaixaProjeto.ApiTests`), acrescentados no passo 11, com
+**41 testes da API e da base de dados** (`CaixaProjeto.ApiTests`), acrescentados no passo 11, com
 uma base de dados SQLite verdadeira, mas em memória:
 
 - **Serviço** (`PedidoServiceTests.cs`): o que fica gravado ao submeter (pedido, motivos, histórico,
@@ -206,7 +208,12 @@ O teste de integração que veio com o modelo (`CaixaProjeto.Tests`) arranca a a
 pelo Aspire e confirma que a página inicial responde. As páginas foram testadas à mão no browser,
 com uma base de dados de teste.
 
-**No total: 71 testes** (30 do motor, 40 da API e da base de dados, 1 da aplicação inteira).
+**10 testes do cliente HTTP da Web** (`CaixaProjeto.WebTests`), acrescentados no passo 14: com
+uma API falsa, que devolve a resposta que o teste quiser, confirmam que "a API não responde" e "a API
+respondeu com um erro" dão mensagens diferentes, e que o código para o suporte chega à mensagem.
+
+**No total: 89 testes** (37 do motor, 41 da API e da base de dados, 10 da Web, 1 da aplicação
+inteira).
 
 ---
 
@@ -293,6 +300,9 @@ Simulacoes       (Id, ClienteId → Clientes (NULL se o NIF for inválido),
 - **Interatividade só onde é precisa.** As páginas com botões usam `InteractiveServer`. A página de
   detalhe começou sem interatividade (só mostrava dados) e passou a tê-la quando ganhou os botões
   do analista.
+- **Duas mensagens de erro diferentes:** "Não foi possível contactar a API" quando a API não
+  responde, e "A API respondeu com um erro (500)... indique o código ..." quando responde com um
+  erro. Ver [Melhorias depois da Tarefa 6](#melhorias-depois-da-tarefa-6).
 
 ---
 
@@ -383,6 +393,35 @@ Decisões sobre cada consulta:
 
 ---
 
+## Melhorias depois da Tarefa 6
+
+A Tarefa 6 pede para analisar o reporte "Não consigo pedir o crédito. Dá erro." Ao procurar as
+hipóteses no código desta aplicação, encontrei três problemas reais, e corrigi-os no passo 14:
+
+1. **O NIF escrito com espaços dava PEDIDO INVÁLIDO.** Quem escreve "123 456 789" recebia "O NIF tem
+   de ter exatamente 9 dígitos", o que um cliente pode bem ler como "dá erro". Agora os espaços,
+   pontos e hífenes são retirados antes de validar (`PedidoCredito.Normalizado()`, no Core). O NIF
+   fica gravado limpo, por isso "123 456 789" e "123456789" são o mesmo cliente. Letras continuam a
+   ser recusadas.
+2. **O campo do NIF não deixava escrever os espaços.** Tinha no máximo 9 caracteres, por isso o
+   browser cortava "123 456 789" em "123 456 7". Passou a aceitar 15.
+3. **"A API está em baixo" e "a API deu um erro" mostravam a mesma mensagem**, "Não foi possível
+   contactar a API", o que engana quem tenta perceber o problema. Agora, quando a API responde com
+   um erro, o cliente HTTP da Web lança uma exceção própria (`ErroDaApiException`) com o código do
+   erro nos logs (o `traceId`), e a página mostra-o: "A API respondeu com um erro (500). Tente de
+   novo dentro de momentos. Se o problema continuar, contacte o suporte e indique o código ...". É o
+   código que o suporte procura no dashboard do Aspire, onde cada registo tem o seu `traceId`.
+
+**Onde está a normalização do NIF:** no motor (para qualquer canal que o use ter o mesmo
+comportamento) e no serviço, antes de gravar (para a base de dados ficar com o NIF limpo).
+
+**Testado:** com testes automáticos (do motor, do serviço e do cliente da Web) e na aplicação a
+correr: um pedido com "123 456 789" foi aprovado e gravado com `123456789`; com a API desligada
+apareceu a primeira mensagem; com a API ligada a uma base de dados desatualizada (a hipótese 3 da
+Tarefa 6), a API respondeu 500 e a página mostrou a segunda mensagem, com o código.
+
+---
+
 ## Estilo do código
 
 - **As regras estão escritas na forma longa (if / else)**, de propósito, para serem fáceis de ler
@@ -417,6 +456,7 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | 11 | Testes automáticos do serviço, da base de dados, dos endpoints e das consultas SQL. |
 | 12 | Respostas escritas às Tarefas 5 (melhorias para produção) e 6 (resolução de problemas). |
 | 13 | Resposta completa à Tarefa 1, com as user stories, e o README com o índice das respostas. |
+| 14 | Melhorias que nasceram da Tarefa 6: NIF com espaços e mensagens de erro distintas, com código para o suporte. |
 
 ---
 
@@ -430,10 +470,15 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 - **Sem migrações de base de dados:** mudar o modelo obriga a recriar a `caixa.db`.
 - **SQLite:** chega bem para uma aplicação local, mas não foi pensado para muitos utilizadores a
   gravar ao mesmo tempo.
-- **As páginas não têm testes automáticos**; foram testadas à mão no browser. Em produção,
-  acrescentaria testes de componentes Blazor (bUnit) ou testes no browser (Playwright).
+- **As páginas não têm testes automáticos**; foram testadas à mão no browser (o cliente HTTP da
+  Web, esse, tem). Em produção, acrescentaria testes de componentes Blazor (bUnit) ou testes no
+  browser (Playwright).
+- **Quando a API falha, a mensagem demora alguns segundos a aparecer**, porque a Web tenta de novo
+  sozinha antes de desistir (a resiliência que vem no `ServiceDefaults`). Com a API desligada foram
+  cerca de 15 a 20 segundos com "A carregar...". Melhoraria mostrando "a tentar de novo..." ou
+  reduzindo as tentativas nas chamadas feitas diante do utilizador.
 - **O teste da aplicação inteira (`CaixaProjeto.Tests`) usa a `caixa.db` verdadeira**, porque arranca
-  a API com a configuração normal. Só abre a base de dados, não escreve nela, mas o ideal seria
+  a API com a configuração normal. Só abre a base de dados (ou cria-a, se ainda não existir), mas o ideal seria
   dar-lhe uma base de dados própria.
 - **Número do pedido em concorrência:** dois pedidos submetidos no mesmo instante podem calcular o
   mesmo número; o índice único impede o duplicado, mas um deles falha. Em produção, o número viria

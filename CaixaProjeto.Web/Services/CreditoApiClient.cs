@@ -10,6 +10,9 @@ namespace CaixaProjeto.Web.Services;
 /// <summary>
 /// Cliente HTTP da ApiService. O endereço base ("https+http://apiservice") é resolvido
 /// pelo service discovery do Aspire, por isso a Web não precisa de saber a porta da API.
+///
+/// Erros: se não houver ligação à API, o HttpClient lança HttpRequestException;
+/// se a API responder com um erro, este cliente lança ErroDaApiException (com o código para o suporte).
 /// </summary>
 public class CreditoApiClient(HttpClient httpClient)
 {
@@ -22,14 +25,20 @@ public class CreditoApiClient(HttpClient httpClient)
     public async Task<ResultadoAnalise> PreAnalisarAsync(PedidoCredito pedido, CancellationToken cancellationToken = default)
     {
         var resposta = await httpClient.PostAsJsonAsync("/api/pedidos/preanalise", pedido, Json, cancellationToken);
-        resposta.EnsureSuccessStatusCode();
+        if (!resposta.IsSuccessStatusCode)
+        {
+            throw await CriarErroAsync(resposta, cancellationToken);
+        }
         return (await resposta.Content.ReadFromJsonAsync<ResultadoAnalise>(Json, cancellationToken))!;
     }
 
     public async Task<PedidoSubmetido> SubmeterAsync(PedidoCredito pedido, CancellationToken cancellationToken = default)
     {
         var resposta = await httpClient.PostAsJsonAsync("/api/pedidos", pedido, Json, cancellationToken);
-        resposta.EnsureSuccessStatusCode();
+        if (!resposta.IsSuccessStatusCode)
+        {
+            throw await CriarErroAsync(resposta, cancellationToken);
+        }
         return (await resposta.Content.ReadFromJsonAsync<PedidoSubmetido>(Json, cancellationToken))!;
     }
 
@@ -40,7 +49,13 @@ public class CreditoApiClient(HttpClient httpClient)
         {
             url += $"&estado={estado}";
         }
-        return (await httpClient.GetFromJsonAsync<Pagina<PedidoResumo>>(url, Json, cancellationToken))!;
+
+        var resposta = await httpClient.GetAsync(url, cancellationToken);
+        if (!resposta.IsSuccessStatusCode)
+        {
+            throw await CriarErroAsync(resposta, cancellationToken);
+        }
+        return (await resposta.Content.ReadFromJsonAsync<Pagina<PedidoResumo>>(Json, cancellationToken))!;
     }
 
     /// <summary>Devolve o detalhe do pedido, ou null se a API responder 404 (o pedido não existe).</summary>
@@ -51,13 +66,17 @@ public class CreditoApiClient(HttpClient httpClient)
         {
             return null;
         }
-        resposta.EnsureSuccessStatusCode();
+        if (!resposta.IsSuccessStatusCode)
+        {
+            throw await CriarErroAsync(resposta, cancellationToken);
+        }
         return await resposta.Content.ReadFromJsonAsync<PedidoDetalhe>(Json, cancellationToken);
     }
 
     /// <summary>
-    /// Envia a decisão do analista. Devolve null se correu bem,
-    /// ou a mensagem de erro que a API explicou (campo "detail" da resposta).
+    /// Envia a decisão do analista. Devolve null se correu bem, ou a mensagem que a API explicou
+    /// quando a decisão não é aceite (400 dados em falta, 404 não existe, 409 já não está em análise manual).
+    /// Qualquer outro erro da API lança ErroDaApiException, como nos outros métodos.
     /// </summary>
     public async Task<string?> DecidirAsync(string numero, DecisaoAnalista decisao, CancellationToken cancellationToken = default)
     {
@@ -67,12 +86,50 @@ public class CreditoApiClient(HttpClient httpClient)
             return null;
         }
 
-        // Os erros da API vêm no formato "Problem Details": { "status": 409, "detail": "..." }
-        var problema = await resposta.Content.ReadFromJsonAsync<ProblemDetails>(Json, cancellationToken);
-        if (problema?.Detail is not null)
+        if (resposta.StatusCode == HttpStatusCode.BadRequest
+            || resposta.StatusCode == HttpStatusCode.NotFound
+            || resposta.StatusCode == HttpStatusCode.Conflict)
         {
-            return problema.Detail;
+            // Decisão recusada por uma regra: a API explica porquê no campo "detail"
+            var problema = await LerProblemaAsync(resposta, cancellationToken);
+            if (problema?.Detail is not null)
+            {
+                return problema.Detail;
+            }
+            return $"A API respondeu com o erro {(int)resposta.StatusCode}.";
         }
-        return $"A API respondeu com o erro {(int)resposta.StatusCode}.";
+
+        throw await CriarErroAsync(resposta, cancellationToken);
+    }
+
+    /// <summary>Transforma uma resposta de erro numa ErroDaApiException, com a explicação e o código da API.</summary>
+    private static async Task<ErroDaApiException> CriarErroAsync(HttpResponseMessage resposta, CancellationToken cancellationToken)
+    {
+        var problema = await LerProblemaAsync(resposta, cancellationToken);
+
+        string? codigo = null;
+        if (problema is not null && problema.Extensions.TryGetValue("traceId", out var traceId))
+        {
+            codigo = traceId?.ToString();
+        }
+
+        return new ErroDaApiException(resposta.StatusCode, problema?.Detail, codigo);
+    }
+
+    /// <summary>
+    /// Lê o corpo de uma resposta de erro no formato "Problem Details": { "status": 500, "detail": "...", "traceId": "..." }.
+    /// Devolve null se o corpo vier vazio ou noutro formato (por exemplo, uma página HTML de um proxy).
+    /// </summary>
+    private static async Task<ProblemDetails?> LerProblemaAsync(HttpResponseMessage resposta, CancellationToken cancellationToken)
+    {
+        var corpo = await resposta.Content.ReadAsStringAsync(cancellationToken);
+        try
+        {
+            return JsonSerializer.Deserialize<ProblemDetails>(corpo, Json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

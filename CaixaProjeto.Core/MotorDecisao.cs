@@ -23,6 +23,9 @@ public sealed class MotorDecisao(ParametrosRegras parametros)
 
     public ResultadoAnalise Analisar(PedidoCredito pedido)
     {
+        // 0. NIF sem espaços, pontos nem hífenes ("123 456 789" é um NIF válido)
+        pedido = pedido.Normalizado();
+
         // 1. Regra 1: se o pedido é inválido, pára aqui (os indicadores nem são calculáveis)
         var erros = ValidacaoInicial.Validar(pedido, parametros);
         if (erros.Count > 0)

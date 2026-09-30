@@ -26,6 +26,7 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 | `CaixaProjeto.Web` | A aplicação Blazor (o ecrã). |
 | `CaixaProjeto.UnitTests` | Testes unitários do motor (só o Core): cenários A a D, Regra 1, valores-limite e prioridades. Correm em menos de 1 segundo. |
 | `CaixaProjeto.ApiTests` | Testes da API com uma base de dados SQLite em memória: o `PedidoService`, os endpoints (códigos HTTP e mensagens) e as consultas SQL da Tarefa 4. Nunca tocam na `caixa.db`. |
+| `CaixaProjeto.WebTests` | Testes do `CreditoApiClient` com uma API falsa: distinguir "a API não responde" de "a API respondeu com um erro", e as mensagens que as páginas mostram. |
 | `CaixaProjeto.Tests` | Teste de integração: arranca a app inteira pelo Aspire e confirma que a página inicial responde. Mais lento. |
 
 ## CaixaProjeto.Core
@@ -33,7 +34,7 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 | Ficheiro | Para que serve |
 |---|---|
 | `Dominio/Enums.cs` | `SituacaoProfissional` e `Decisao`. A decisão tem um número que é a severidade: é isso que permite à Regra 8 escolher "a mais restritiva" com um simples máximo. Também tem os textos para o ecrã ("ANÁLISE MANUAL"...). |
-| `Dominio/PedidoCredito.cs` | Os 8 campos de entrada do enunciado. |
+| `Dominio/PedidoCredito.cs` | Os 8 campos de entrada do enunciado, e o `Normalizado()`, que tira ao NIF os espaços, pontos e hífenes. |
 | `Dominio/ResultadoAnalise.cs` | O que sai da análise: `Decisao`, lista de `Motivo` (regra + descrição + decisão pedida) e `Indicadores`. |
 | `Dominio/ParametrosRegras.cs` | Os limites (18, 75, 20×, 35%, 50%, 50.000 €). Os valores vêm do `appsettings.json` da API. |
 | `Regras/ValidacaoInicial.cs` | Regra 1. Junta todos os erros de uma vez. |
@@ -102,12 +103,19 @@ Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, Rendim
 | `EndpointsTests.cs` | Arranca a API dentro dos testes (`WebApplicationFactory`, classe `ApiDeTeste`) com uma base de dados em memória e testa as respostas HTTP: 200, 400, 404 e 409. |
 | `ConsultasTarefa4Tests.cs` | Lê o `sql/Tarefa4_Consultas.sql`, corre cada consulta sobre dados preparados e confere os resultados. |
 
+## CaixaProjeto.WebTests
+
+| Ficheiro | Para que serve |
+|---|---|
+| `CreditoApiClientTests.cs` | Uma API falsa (`ApiFalsa`) devolve a resposta que o teste quiser: erro 500 com código, resposta que não é JSON, 404, 409, ou nenhuma resposta. Confirma a exceção lançada e a mensagem que a página mostraria. |
+
 ## CaixaProjeto.Web
 
 | Ficheiro | Para que serve |
 |---|---|
 | `Program.cs` | Arranque da Web. Regista o `CreditoApiClient` com o endereço `https+http://apiservice`, que o Aspire traduz para o endereço real da API. |
-| `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`), gravar (`SubmeterAsync`), listar (`ListarAsync`), ler um pedido (`ObterAsync`, devolve null se a API responder 404) e enviar a decisão do analista (`DecidirAsync`, devolve null ou a mensagem de erro da API). |
+| `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`), gravar (`SubmeterAsync`), listar (`ListarAsync`), ler um pedido (`ObterAsync`, devolve null se a API responder 404) e enviar a decisão do analista (`DecidirAsync`, devolve null ou a mensagem de erro da API). Quando a API responde com um erro, lança `ErroDaApiException`. |
+| `Services/ErroDaApiException.cs` | A exceção para "a API respondeu com um erro" (com o código `traceId` para o suporte) e o `MensagensErro`, que escolhe a frase que as páginas mostram em cada caso. |
 | `Models/PedidoForm.cs` | Modelo do formulário (com `set`, porque o Blazor precisa) e os cenários A a D para preencher num clique. |
 | `Components/App.razor` | A página HTML "mãe": carrega o Bootstrap, o CSS e o script do Blazor. |
 | `Components/Routes.razor` | Diz ao Blazor para encontrar as páginas pelo `@page` e usar o `MainLayout`. |

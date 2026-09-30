@@ -71,12 +71,12 @@ Dois problemas que só aparecem com vários utilizadores ao mesmo tempo:
 - **Health checks em produção.** Os endereços `/health` e `/alive` só existem em desenvolvimento
   (é assim que vêm no modelo, por segurança). Em produção seriam ligados à monitorização, sem
   expor pormenores internos.
-- **Mostrar ao utilizador um código de erro.** Quando algo falha, a página mostraria um código (o
-  `traceId`, que a API já devolve nos erros), para o suporte encontrar logo o erro nos logs.
-- **Mensagens de erro mais precisas.** Hoje, qualquer falha ao chamar a API mostra "Não foi possível
-  contactar a API", mesmo quando a API respondeu com um erro interno. São situações diferentes, que
-  mereciam mensagens diferentes.
-- **Pipeline de entrega contínua** (por exemplo, GitHub Actions): compilar, correr os 71 testes e
+- **Mostrar ao utilizador um código de erro** e **mensagens de erro mais precisas.** Qualquer falha
+  ao chamar a API mostrava "Não foi possível contactar a API", mesmo quando a API tinha respondido
+  com um erro interno. *Já feito no passo 14:* as duas situações têm mensagens diferentes e, quando a
+  API responde com um erro, a página mostra o código (o `traceId`) para o suporte encontrar o erro
+  nos logs.
+- **Pipeline de entrega contínua** (por exemplo, GitHub Actions): compilar, correr os 89 testes e
   publicar em ambientes separados (desenvolvimento, testes, produção), com aprovação antes de
   produção.
 - **Versionar a API** (`/api/v1/...`) e publicar a documentação OpenAPI, que hoje só existe em
@@ -86,8 +86,8 @@ Dois problemas que só aparecem com vários utilizadores ao mesmo tempo:
 
 ## 2. Testes adicionais
 
-A aplicação tem 71 testes automáticos: 30 das regras, 40 do serviço, da API e das consultas SQL, e
-1 que arranca a aplicação inteira. Acrescentaria:
+A aplicação tem 89 testes automáticos: 37 das regras, 41 do serviço, da API e das consultas SQL, 10
+do cliente HTTP da Web e 1 que arranca a aplicação inteira. Acrescentaria:
 
 | Teste | Para quê |
 |---|---|

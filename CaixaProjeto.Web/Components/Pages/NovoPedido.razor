@@ -23,7 +23,7 @@
             <div class="row g-3">
                 <div class="col-sm-6">
                     <label class="form-label">NIF</label>
-                    <InputText class="form-control" @bind-Value="form.Nif" maxlength="9" />
+                    <InputText class="form-control" @bind-Value="form.Nif" maxlength="15" placeholder="123 456 789" />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-label">Idade</label>
@@ -147,10 +147,11 @@
         {
             await chamada();
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
+            // Sem ligação à API, ou a API respondeu com um erro: cada caso tem a sua mensagem
             LimparResultado();
-            erro = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+            erro = MensagensErro.Para(ex);
         }
         finally
         {

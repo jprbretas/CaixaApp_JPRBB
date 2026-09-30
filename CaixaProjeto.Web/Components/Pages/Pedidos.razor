@@ -123,10 +123,10 @@ else
         {
             pagina = await Api.ListarAsync(estado, numero, TamanhoPagina);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
             pagina = null;
-            erro = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+            erro = MensagensErro.Para(ex);
         }
     }
 }

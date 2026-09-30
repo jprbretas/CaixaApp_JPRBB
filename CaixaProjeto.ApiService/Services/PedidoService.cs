@@ -20,6 +20,8 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
     /// </summary>
     public async Task<ResultadoAnalise> SimularAsync(PedidoCredito dados, CancellationToken ct = default)
     {
+        // NIF limpo antes de gravar, para "123 456 789" e "123456789" serem o mesmo cliente
+        dados = dados.Normalizado();
         var resultado = motor.Analisar(dados);
         var agora = relogio.GetUtcNow().UtcDateTime;
 
@@ -44,6 +46,8 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
 
     public async Task<PedidoSubmetido> SubmeterAsync(PedidoCredito dados, CancellationToken ct = default)
     {
+        // NIF limpo antes de gravar, para "123 456 789" e "123456789" serem o mesmo cliente
+        dados = dados.Normalizado();
         var resultado = motor.Analisar(dados);
         var agora = relogio.GetUtcNow().UtcDateTime;
 
