@@ -37,7 +37,7 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 | `Dominio/ParametrosRegras.cs` | Os limites (18, 75, 20×, 35%, 50%, 50.000 €). Os valores vêm do `appsettings.json` da API. |
 | `Regras/ValidacaoInicial.cs` | Regra 1. Junta todos os erros de uma vez. |
 | `Regras/CalculoIndicadores.cs` | Prestação, taxa de esforço, idade no fim do contrato, limite de montante. |
-| `Dominio/ResultadoAnalise.cs` → `PedidoSubmetido` | O que a API devolve ao gravar: número do pedido + resultado. Está no Core porque a API e a Web partilham este "contrato". |
+| `Contratos/Pedidos.cs` | Os objetos que viajam em JSON entre a API e a Web: `PedidoSubmetido` (número + resultado), `PedidoResumo` e `Pagina<T>` (lista), `PedidoDetalhe` e `EstadoHistorico` (detalhe), `DecisaoAnalista`. Estão no Core porque a API e a Web partilham estes "contratos". |
 | `Regras/RegrasNegocio.cs` | Interface `IRegra` e uma classe por regra, da 2 à 7. Para acrescentar uma regra nova, cria-se mais uma classe. |
 | `MotorDecisao.cs` | O ponto de entrada: valida, calcula, corre as regras e aplica a Regra 8. |
 
@@ -45,12 +45,13 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 
 | Ficheiro | Para que serve |
 |---|---|
-| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula), `POST /api/pedidos` (analisa e grava) e `GET /api/pedidos` (lista paginada, com filtro opcional `?estado=`) `GET /api/pedidos/{numero}` (detalhe, ou 404 se não existir) e `POST /api/pedidos/{numero}/decisao` (decisão do analista; os erros vêm em formato Problem Details com 400, 404 ou 409). |
+| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula), `POST /api/pedidos` (analisa e grava) e `GET /api/pedidos` (lista paginada, com filtro opcional `?estado=`), `GET /api/pedidos/{numero}` (detalhe, ou 404 se não existir) e `POST /api/pedidos/{numero}/decisao` (decisão do analista; os erros vêm em formato Problem Details com 400, 404 ou 409). |
 | `appsettings.json` | Configuração: limites das regras e a ligação à BD (`ConnectionStrings:caixa`). |
 | `Data/Entidades.cs` | As tabelas: `Cliente`, `Pedido`, `MotivoPedido` e `HistoricoEstado`. |
 | `Data/CaixaDbContext.cs` | A "porta" para a BD (EF Core). Define índices (NIF e número únicos), grava os enums como texto e os decimais como número. |
 | `Services/PedidoService.cs` | Junta motor e BD: analisa o pedido, atribui o número (ano + sequência, ex. 20260001), liga-o ao cliente pelo NIF e grava motivos e histórico. `ListarAsync` devolve uma página da lista, do mais recente para o mais antigo. `ObterAsync` lê um pedido com motivos e histórico, tal como foi gravado (o motor não volta a correr). `DecidirAsync` aplica a decisão do analista: só em pedidos em ANÁLISE MANUAL, com nome e observação obrigatórios; muda o `EstadoAtual` e acrescenta uma linha ao histórico. |
 | `Services/ResultadoDecisao.cs` | Os resultados possíveis da decisão do analista (`Decidido`, `DadosEmFalta`, `NaoEncontrado`, `NaoAguardaAnalista`), que o `Program.cs` traduz em códigos HTTP. |
+| `CaixaProjeto.ApiService.http` | Pedidos de exemplo que se podem enviar diretamente do Visual Studio (botão "Send request"). |
 | `caixa.db` | O ficheiro SQLite. É criado no primeiro arranque (`EnsureCreated`) e não vai para o git. Apagar = recomeçar do zero. |
 
 ### Modelo de dados
@@ -69,14 +70,13 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 - `DecisaoAutomatica` é a do motor e nunca muda. `EstadoAtual` pode mudar quando um analista decide.
 - Cada mudança de estado fica em `HistoricoEstados`. É daí que sai "quantos pedidos passaram de ANÁLISE MANUAL a APROVADO".
 - Os pedidos inválidos também são gravados, para auditoria e reporting.
-| `CaixaProjeto.ApiService.http` | Pedidos de exemplo que se podem enviar diretamente do Visual Studio (botão "Send request"). |
 
 ## CaixaProjeto.Web
 
 | Ficheiro | Para que serve |
 |---|---|
 | `Program.cs` | Arranque da Web. Regista o `CreditoApiClient` com o endereço `https+http://apiservice`, que o Aspire traduz para o endereço real da API. |
-| `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`), gravar (`SubmeterAsync`), listar (`ListarAsync`) ler um pedido (`ObterAsync`, devolve null se a API responder 404) e enviar a decisão do analista (`DecidirAsync`, devolve null ou a mensagem de erro da API). |
+| `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`), gravar (`SubmeterAsync`), listar (`ListarAsync`), ler um pedido (`ObterAsync`, devolve null se a API responder 404) e enviar a decisão do analista (`DecidirAsync`, devolve null ou a mensagem de erro da API). |
 | `Models/PedidoForm.cs` | Modelo do formulário (com `set`, porque o Blazor precisa) e os cenários A a D para preencher num clique. |
 | `Components/App.razor` | A página HTML "mãe": carrega o Bootstrap, o CSS e o script do Blazor. |
 | `Components/Routes.razor` | Diz ao Blazor para encontrar as páginas pelo `@page` e usar o `MainLayout`. |
