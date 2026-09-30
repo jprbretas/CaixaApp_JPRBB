@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="CaixaProjeto.ApiService/CaixaProjeto.ApiService.csproj" />
+  <Project Path="CaixaProjeto.ApiTests/CaixaProjeto.ApiTests.csproj" />
   <Project Path="CaixaProjeto.AppHost/CaixaProjeto.AppHost.csproj" />
   <Project Path="CaixaProjeto.Core/CaixaProjeto.Core.csproj" />
   <Project Path="CaixaProjeto.ServiceDefaults/CaixaProjeto.ServiceDefaults.csproj" />

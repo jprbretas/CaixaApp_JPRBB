@@ -25,6 +25,7 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 | `CaixaProjeto.ApiService` | API HTTP. Recebe pedidos em JSON, chama o motor, grava na BD SQLite e devolve o resultado. |
 | `CaixaProjeto.Web` | A aplicação Blazor (o ecrã). |
 | `CaixaProjeto.UnitTests` | Testes unitários do motor (só o Core): cenários A a D, Regra 1, valores-limite e prioridades. Correm em menos de 1 segundo. |
+| `CaixaProjeto.ApiTests` | Testes da API com uma base de dados SQLite em memória: o `PedidoService`, os endpoints (códigos HTTP e mensagens) e as consultas SQL da Tarefa 4. Nunca tocam na `caixa.db`. |
 | `CaixaProjeto.Tests` | Teste de integração: arranca a app inteira pelo Aspire e confirma que a página inicial responde. Mais lento. |
 
 ## CaixaProjeto.Core
@@ -75,11 +76,29 @@ Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, Rendim
 - Os pedidos inválidos também são gravados, para auditoria e reporting.
 - Cada simulação (botão "Analisar") fica em `Simulacoes`, separada dos pedidos: não tem número, estado nem histórico.
 
+## Documentação
+
+| Ficheiro | Para que serve |
+|---|---|
+| `DECISIONS.md` (na raiz) | As decisões de design e desenvolvimento e porquê, para explicar como a aplicação foi feita. |
+| `docs/Estrutura.md` | Este guia dos ficheiros. |
+| `docs/Tarefa5_Melhoria_da_Solucao.md` | Resposta à Tarefa 5: melhorias técnicas, testes adicionais e dados para auditoria e reporting. |
+| `docs/Tarefa6_Resolucao_de_Problemas.md` | Resposta à Tarefa 6: o reporte "Não consigo pedir o crédito", com a informação em falta, como a obter, as hipóteses de erro e as equipas a envolver. |
+
 ## sql
 
 | Ficheiro | Para que serve |
 |---|---|
 | `Tarefa4_Consultas.sql` | As cinco consultas da Tarefa 4 do enunciado, em SQL para SQLite, comentadas. Correm sobre a `caixa.db` num programa como o DB Browser for SQLite (abrir a base de dados, separador "Execute SQL"). |
+
+## CaixaProjeto.ApiTests
+
+| Ficheiro | Para que serve |
+|---|---|
+| `BaseDadosDeTeste.cs` | Cria uma base de dados SQLite em memória com as tabelas da aplicação, um relógio de teste (`RelogioDeTeste`) que marca a hora que o teste quiser e os pedidos de exemplo (`Exemplos`). |
+| `PedidoServiceTests.cs` | Testes do `PedidoService`: submeter, simular, listar, obter o detalhe e a decisão do analista. |
+| `EndpointsTests.cs` | Arranca a API dentro dos testes (`WebApplicationFactory`, classe `ApiDeTeste`) com uma base de dados em memória e testa as respostas HTTP: 200, 400, 404 e 409. |
+| `ConsultasTarefa4Tests.cs` | Lê o `sql/Tarefa4_Consultas.sql`, corre cada consulta sobre dados preparados e confere os resultados. |
 
 ## CaixaProjeto.Web
 

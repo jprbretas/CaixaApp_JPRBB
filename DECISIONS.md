@@ -2,7 +2,9 @@
 
 Este ficheiro explica as escolhas que fiz na aplicação de pré-análise de crédito pessoal e porquê.
 Começa pelas três decisões mais importantes; as secções seguintes dão os detalhes. O guia de cada
-ficheiro está em [docs/Estrutura.md](docs/Estrutura.md).
+ficheiro está em [docs/Estrutura.md](docs/Estrutura.md). As respostas escritas às Tarefas 5 e 6 do
+enunciado estão em [docs/Tarefa5_Melhoria_da_Solucao.md](docs/Tarefa5_Melhoria_da_Solucao.md) e
+[docs/Tarefa6_Resolucao_de_Problemas.md](docs/Tarefa6_Resolucao_de_Problemas.md).
 
 **Índice:**
 [As três decisões principais](#as-três-decisões-principais) ·
@@ -77,7 +79,9 @@ e Web. Acrescentei o `Core` e o `UnitTests`.
 | `Web` | As páginas. Pede tudo à API através do `CreditoApiClient`. |
 | `AppHost` | Só para desenvolvimento: arranca a API e a Web e diz à Web onde está a API. |
 | `ServiceDefaults` | Veio com o modelo e não foi alterado: logs, health checks, tentativas repetidas e service discovery. |
-| `UnitTests` / `Tests` | Testes do motor / teste que arranca a aplicação inteira (este veio com o modelo). |
+| `UnitTests` | Testes do motor, só o Core. |
+| `ApiTests` | Testes do serviço, da base de dados, dos endpoints da API e das consultas SQL da Tarefa 4. |
+| `Tests` | Teste que arranca a aplicação inteira pelo Aspire (veio com o modelo). |
 
 **Porquê projetos separados e não pastas.** Num projeto único (como no MVC tradicional) a
 separação depende da disciplina de quem programa. Com projetos, é o compilador que garante as
@@ -168,9 +172,42 @@ que é essa mudança que provoca o resultado.
   e a decisão mais restritiva.
 - **Parâmetros:** mudar um limite na configuração muda a decisão.
 
+**40 testes da API e da base de dados** (`CaixaProjeto.ApiTests`), acrescentados no passo 11, com
+uma base de dados SQLite verdadeira, mas em memória:
+
+- **Serviço** (`PedidoServiceTests.cs`): o que fica gravado ao submeter (pedido, motivos, histórico,
+  cliente e indicadores); números seguidos que recomeçam no ano seguinte; o mesmo NIF reaproveita o
+  cliente; pedidos e simulações inválidos ficam sem cliente; simular não cria pedido; a lista
+  ordena, filtra e pagina, e corrige valores sem sentido (página 0, tamanho 500); o detalhe devolve
+  o que foi gravado; e os quatro resultados da decisão do analista, incluindo decidir duas vezes.
+- **Endpoints** (`EndpointsTests.cs`): a API verdadeira arranca dentro dos testes e responde por
+  HTTP. Confirma os códigos 200, 400, 404 e 409, as mensagens de erro, as decisões em texto no
+  JSON e que os acentos chegam intactos.
+- **Consultas da Tarefa 4** (`ConsultasTarefa4Tests.cs`): os testes leem o ficheiro
+  `sql/Tarefa4_Consultas.sql` tal como está, correm cada consulta sobre dados preparados e conferem
+  os resultados. Se alguém mudar o ficheiro ou o modelo de dados e partir uma consulta, os testes
+  falham.
+
+Decisões sobre estes testes:
+
+- **Um projeto novo, e não mais testes no `UnitTests`.** O `UnitTests` só depende do Core e corre em
+  menos de um segundo; mantê-lo assim deixa claro que as regras não precisam de base de dados.
+- **SQLite em memória, e não uma base de dados falsa.** É o mesmo motor de base de dados da
+  aplicação, com as tabelas criadas pelo mesmo `EnsureCreated`. Cada teste tem a sua base de dados
+  vazia, por isso os testes não dependem uns dos outros nem da ordem em que correm.
+- **Os testes nunca tocam na `caixa.db`.** Os testes dos endpoints substituem a ligação à base de
+  dados por uma em memória. Confirmei que a `caixa.db` ficou igual depois de os correr.
+- **Um relógio de teste.** O `PedidoService` recebe a hora através de um `TimeProvider`, por isso os
+  testes escolhem a data: números dos pedidos previsíveis, e registos "com 60 dias" para a consulta
+  do último mês, sem mexer diretamente na base de dados.
+- **O que se lê no serviço é confirmado com outro `DbContext`**, para ver o que ficou mesmo gravado
+  na base de dados e não o que o Entity Framework ainda tem em memória.
+
 O teste de integração que veio com o modelo (`CaixaProjeto.Tests`) arranca a aplicação inteira
-pelo Aspire e confirma que a página inicial responde. A lista, o detalhe e a decisão do analista
-foram também testados à mão no browser, com uma base de dados de teste.
+pelo Aspire e confirma que a página inicial responde. As páginas foram testadas à mão no browser,
+com uma base de dados de teste.
+
+**No total: 71 testes** (30 do motor, 40 da API e da base de dados, 1 da aplicação inteira).
 
 ---
 
@@ -340,9 +377,10 @@ Decisões sobre cada consulta:
 - **Análise manual para aprovado (consulta 5)** lê o histórico de estados, que é o registo de
   auditoria. O ficheiro inclui também a versão que só usa a tabela `Pedidos`, que hoje dá o mesmo
   resultado porque um pedido só pode ser decidido uma vez.
-- **Testadas com dados preparados para cada caso:** pedidos aprovados pelo motor e pelo analista,
-  recusas por regras diferentes, um empate de motivos, simulações, e pedidos e simulações com datas
-  antigas (que a consulta 4 tem de deixar de fora).
+- **Testadas automaticamente** (passo 11) com dados preparados para cada caso: pedidos aprovados
+  pelo motor e pelo analista, recusas por regras diferentes, um empate de motivos, uma base de
+  dados vazia, simulações, e pedidos e simulações com datas antigas (que a consulta 4 tem de deixar
+  de fora). Ver [Testes](#testes).
 
 ---
 
@@ -377,6 +415,8 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | 8 | Este documento (DECISIONS.md). |
 | 9 | Consultas SQL da Tarefa 4. |
 | 10 | Registo das simulações, para a consulta 4 contar pedidos e simulações. |
+| 11 | Testes automáticos do serviço, da base de dados, dos endpoints e das consultas SQL. |
+| 12 | Respostas escritas às Tarefas 5 (melhorias para produção) e 6 (resolução de problemas). |
 
 ---
 
@@ -390,5 +430,12 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 - **Sem migrações de base de dados:** mudar o modelo obriga a recriar a `caixa.db`.
 - **SQLite:** chega bem para uma aplicação local, mas não foi pensado para muitos utilizadores a
   gravar ao mesmo tempo.
-- **Só o motor tem testes automáticos.** A API e a gravação na base de dados foram testadas à mão.
-- **Por fazer:** as respostas escritas das Tarefas 5 e 6.
+- **As páginas não têm testes automáticos**; foram testadas à mão no browser. Em produção,
+  acrescentaria testes de componentes Blazor (bUnit) ou testes no browser (Playwright).
+- **O teste da aplicação inteira (`CaixaProjeto.Tests`) usa a `caixa.db` verdadeira**, porque arranca
+  a API com a configuração normal. Só abre a base de dados, não escreve nela, mas o ideal seria
+  dar-lhe uma base de dados própria.
+- **Por fazer:** a proposta de solução em formato de user story (Tarefa 1, pergunta 5).
+
+O que mudaria para levar a aplicação para produção está na
+[Tarefa 5](docs/Tarefa5_Melhoria_da_Solucao.md).
