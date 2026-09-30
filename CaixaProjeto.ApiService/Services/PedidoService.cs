@@ -14,6 +14,34 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
 {
     public const string UtilizadorSistema = "sistema";
 
+    /// <summary>
+    /// Simulação (botão "Analisar"): analisa o pedido, regista a simulação e devolve o resultado.
+    /// Não cria pedido: não há número, estado nem histórico.
+    /// </summary>
+    public async Task<ResultadoAnalise> SimularAsync(PedidoCredito dados, CancellationToken ct = default)
+    {
+        var resultado = motor.Analisar(dados);
+        var agora = relogio.GetUtcNow().UtcDateTime;
+
+        db.Simulacoes.Add(new Simulacao
+        {
+            Cliente = await ObterOuCriarClienteAsync(dados.Nif, agora, ct),
+            Nif = dados.Nif,
+            Idade = dados.Idade,
+            RendimentoMensalLiquido = dados.RendimentoMensalLiquido,
+            PrestacoesAtuais = dados.PrestacoesAtuais,
+            ValorPretendido = dados.ValorPretendido,
+            PrazoMeses = dados.PrazoMeses,
+            SituacaoProfissional = dados.SituacaoProfissional,
+            IncidentesCredito = dados.IncidentesCredito,
+            Decisao = resultado.Decisao,
+            DataSimulacao = agora
+        });
+        await db.SaveChangesAsync(ct);
+
+        return resultado;
+    }
+
     public async Task<PedidoSubmetido> SubmeterAsync(PedidoCredito dados, CancellationToken ct = default)
     {
         var resultado = motor.Analisar(dados);

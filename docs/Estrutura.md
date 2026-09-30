@@ -45,11 +45,11 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 
 | Ficheiro | Para que serve |
 |---|---|
-| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula), `POST /api/pedidos` (analisa e grava) e `GET /api/pedidos` (lista paginada, com filtro opcional `?estado=`), `GET /api/pedidos/{numero}` (detalhe, ou 404 se não existir) e `POST /api/pedidos/{numero}/decisao` (decisão do analista; os erros vêm em formato Problem Details com 400, 404 ou 409). |
+| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula e regista a simulação), `POST /api/pedidos` (analisa e grava) e `GET /api/pedidos` (lista paginada, com filtro opcional `?estado=`), `GET /api/pedidos/{numero}` (detalhe, ou 404 se não existir) e `POST /api/pedidos/{numero}/decisao` (decisão do analista; os erros vêm em formato Problem Details com 400, 404 ou 409). |
 | `appsettings.json` | Configuração: limites das regras e a ligação à BD (`ConnectionStrings:caixa`). |
-| `Data/Entidades.cs` | As tabelas: `Cliente`, `Pedido`, `MotivoPedido` e `HistoricoEstado`. |
+| `Data/Entidades.cs` | As tabelas: `Cliente`, `Pedido`, `MotivoPedido`, `HistoricoEstado` e `Simulacao`. |
 | `Data/CaixaDbContext.cs` | A "porta" para a BD (EF Core). Define índices (NIF e número únicos), grava os enums como texto e os decimais como número. |
-| `Services/PedidoService.cs` | Junta motor e BD: analisa o pedido, atribui o número (ano + sequência, ex. 20260001), liga-o ao cliente pelo NIF e grava motivos e histórico. `ListarAsync` devolve uma página da lista, do mais recente para o mais antigo. `ObterAsync` lê um pedido com motivos e histórico, tal como foi gravado (o motor não volta a correr). `DecidirAsync` aplica a decisão do analista: só em pedidos em ANÁLISE MANUAL, com nome e observação obrigatórios; muda o `EstadoAtual` e acrescenta uma linha ao histórico. |
+| `Services/PedidoService.cs` | Junta motor e BD. `SimularAsync` analisa e regista a simulação, sem criar pedido. `SubmeterAsync` analisa o pedido, atribui o número (ano + sequência, ex. 20260001), liga-o ao cliente pelo NIF e grava motivos e histórico. `ListarAsync` devolve uma página da lista, do mais recente para o mais antigo. `ObterAsync` lê um pedido com motivos e histórico, tal como foi gravado (o motor não volta a correr). `DecidirAsync` aplica a decisão do analista: só em pedidos em ANÁLISE MANUAL, com nome e observação obrigatórios; muda o `EstadoAtual` e acrescenta uma linha ao histórico. |
 | `Services/ResultadoDecisao.cs` | Os resultados possíveis da decisão do analista (`Decidido`, `DadosEmFalta`, `NaoEncontrado`, `NaoAguardaAnalista`), que o `Program.cs` traduz em códigos HTTP. |
 | `CaixaProjeto.ApiService.http` | Pedidos de exemplo que se podem enviar diretamente do Visual Studio (botão "Send request"). |
 | `caixa.db` | O ficheiro SQLite. É criado no primeiro arranque (`EnsureCreated`) e não vai para o git. Apagar = recomeçar do zero. |
@@ -65,11 +65,15 @@ Pedidos          (Id, Numero UNIQUE, ClienteId → Clientes (pode ser NULL se o 
                   DecisaoAutomatica, EstadoAtual, DataSubmissao)
 MotivosPedido    (Id, PedidoId → Pedidos, Regra, Descricao, Decisao)
 HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Utilizador, Observacao)
+Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, RendimentoMensalLiquido,
+                  PrestacoesAtuais, ValorPretendido, PrazoMeses, SituacaoProfissional,
+                  IncidentesCredito, Decisao, DataSimulacao)
 ```
 
 - `DecisaoAutomatica` é a do motor e nunca muda. `EstadoAtual` pode mudar quando um analista decide.
 - Cada mudança de estado fica em `HistoricoEstados`. É daí que sai "quantos pedidos passaram de ANÁLISE MANUAL a APROVADO".
 - Os pedidos inválidos também são gravados, para auditoria e reporting.
+- Cada simulação (botão "Analisar") fica em `Simulacoes`, separada dos pedidos: não tem número, estado nem histórico.
 
 ## sql
 
@@ -90,7 +94,7 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 | `Components/Layout/MainLayout.razor` | Moldura de todas as páginas: menu à esquerda, barra em cima, conteúdo no meio. |
 | `Components/Layout/NavMenu.razor` | O menu lateral. |
 | `Components/Pages/Home.razor` | Página inicial (`/`). |
-| `Components/Pages/NovoPedido.razor` | Formulário do pedido e resultado (`/pedidos/novo`). "Analisar" só simula; "Submeter pedido" grava e mostra o número. É `InteractiveServer`: os cliques são tratados no servidor através de uma ligação em tempo real (SignalR). |
+| `Components/Pages/NovoPedido.razor` | Formulário do pedido e resultado (`/pedidos/novo`). "Analisar" simula (fica registada em `Simulacoes`, mas não cria pedido); "Submeter pedido" cria o pedido e mostra o número. É `InteractiveServer`: os cliques são tratados no servidor através de uma ligação em tempo real (SignalR). |
 | `Components/Pages/Pedidos.razor` | Lista dos pedidos gravados (`/pedidos`): tabela com 20 por página, botões Anterior/Seguinte e filtro por estado atual. O número de cada pedido abre o detalhe. |
 | `Components/Pages/DetalhePedido.razor` | Detalhe de um pedido (`/pedidos/{numero}`): dados, análise automática (com o `ResultadoView`), estado atual e histórico de estados. Nos pedidos em ANÁLISE MANUAL mostra o formulário do analista (nome, observação, Aprovar/Recusar), por isso usa `InteractiveServer`. |
 | `Components/Shared/ResultadoView.razor` | Cartão reutilizável com decisão, motivos e indicadores. |

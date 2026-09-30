@@ -14,6 +14,7 @@ ficheiro está em [docs/Estrutura.md](docs/Estrutura.md).
 [Base de dados](#base-de-dados) ·
 [API](#api) ·
 [Interface](#interface) ·
+[Simulações](#simulações) ·
 [Decisão do analista](#decisão-do-analista) ·
 [Consultas da Tarefa 4](#consultas-da-tarefa-4) ·
 [Estilo do código](#estilo-do-código) ·
@@ -140,7 +141,7 @@ de negócio:
 | Idade no fim do contrato | Idade + prazo ÷ 12, sem arredondar | A idade conta em anos completos ou com a fração do último ano? |
 | Regra 7 contra uma recusa | A recusa prevalece | "Independentemente das restantes regras" quer dizer "no mínimo análise manual" ou "sempre análise manual, mesmo que outra regra recuse"? |
 | Taxa de esforço sem juros | Como o enunciado manda | Em produção, que taxa de juro e que fórmula de prestação usar? |
-| Simulações | "Analisar" simula sem gravar; só "Submeter pedido" grava | A Tarefa 4 fala em "pedidos/simulações": as simulações também devem ficar registadas? |
+| Simulações | Ficam registadas numa tabela própria, separadas dos pedidos (ver [Simulações](#simulações)) | Que dados das simulações interessa guardar, e durante quanto tempo? |
 
 ---
 
@@ -186,6 +187,9 @@ Pedidos          (Id, Numero UNIQUE, ClienteId → Clientes (NULL se o NIF for i
                   DecisaoAutomatica, EstadoAtual, DataSubmissao)
 MotivosPedido    (Id, PedidoId → Pedidos, Regra, Descricao, Decisao)
 HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Utilizador, Observacao)
+Simulacoes       (Id, ClienteId → Clientes (NULL se o NIF for inválido),
+                  Nif, Idade, RendimentoMensalLiquido, PrestacoesAtuais, ValorPretendido, PrazoMeses,
+                  SituacaoProfissional, IncidentesCredito, Decisao, DataSimulacao)
 ```
 
 - **`DecisaoAutomatica` nunca muda; `EstadoAtual` pode mudar.** Cada mudança de estado, incluindo
@@ -194,7 +198,8 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
   exemplo, o motivo de recusa mais frequente (Tarefa 4).
 - **Os pedidos inválidos também são gravados**, para auditoria e reporting. Um NIF inválido não
   identifica ninguém, por isso esses pedidos ficam sem cliente.
-- **Clientes identificados pelo NIF**, para saber quantos pedidos fez cada um (Tarefa 4).
+- **Clientes identificados pelo NIF**, para saber quantos pedidos e simulações fez cada um
+  (Tarefa 4). Um cliente pode ser criado por uma simulação e reaproveitado depois pelo pedido.
 - **Os indicadores são gravados**, incluindo o montante máximo recomendado. Assim, o detalhe de um
   pedido mostra os valores que decidiram na altura, mesmo que os limites mudem depois na
   configuração. O motor não volta a correr quando se consulta um pedido.
@@ -215,7 +220,7 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 
 | Endpoint | O que faz |
 |---|---|
-| `POST /api/pedidos/preanalise` | Simula: aplica as regras e devolve o resultado, sem gravar. |
+| `POST /api/pedidos/preanalise` | Simula: aplica as regras, regista a simulação e devolve o resultado. Não cria pedido. |
 | `POST /api/pedidos` | Analisa, grava e devolve o número atribuído e o resultado. |
 | `GET /api/pedidos?estado=&pagina=&tamanho=` | Lista paginada, do mais recente para o mais antigo, com filtro opcional por estado atual. |
 | `GET /api/pedidos/{numero}` | Detalhe de um pedido: dados, análise automática, estado atual e histórico. |
@@ -238,8 +243,8 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 
 ## Interface
 
-- **Página Novo pedido** com dois botões: **Analisar** (simula, não grava) e **Submeter pedido**
-  (grava e mostra o número, com link para o detalhe). Os quatro cenários do enunciado preenchem o
+- **Página Novo pedido** com dois botões: **Analisar** (simula; fica registada como simulação, mas
+  não cria pedido) e **Submeter pedido** (cria o pedido e mostra o número, com link para o detalhe). Os quatro cenários do enunciado preenchem o
   formulário num clique.
 - **O formulário não tem validações próprias.** Quem valida é o motor (Regra 1), por isso o ecrã
   mostra exatamente os mesmos motivos que a API devolveria a qualquer outro canal.
@@ -252,6 +257,25 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 - **Interatividade só onde é precisa.** As páginas com botões usam `InteractiveServer`. A página de
   detalhe começou sem interatividade (só mostrava dados) e passou a tê-la quando ganhou os botões
   do analista.
+
+---
+
+## Simulações
+
+A Tarefa 4 pede os "clientes que realizaram mais do que um pedido/simulação no último mês". Por
+isso, desde o passo 10, cada clique em **Analisar** fica registado.
+
+- **Numa tabela própria (`Simulacoes`), e não na tabela `Pedidos`.** Uma simulação não é um pedido:
+  não tem número, não tem estado e não vai ao analista. Se ficassem juntas, com uma coluna a dizer o
+  tipo, todas as listas e consultas de pedidos teriam de se lembrar de excluir as simulações, e
+  bastava um esquecimento para os números saírem errados.
+- **Guarda os dados de entrada e a decisão que o cliente viu**, com a data. Não guarda motivos nem
+  indicadores: para estatística chega, e se for preciso, a simulação pode ser analisada de novo a
+  partir dos dados.
+- **As simulações inválidas também são gravadas**, como os pedidos inválidos. Com NIF inválido
+  ficam sem cliente.
+- **A página e o contrato da API não mudaram:** o endpoint de simulação continua a devolver o mesmo
+  resultado. A única diferença para o utilizador é o texto "o pedido ainda não foi submetido".
 
 ---
 
@@ -273,6 +297,31 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 As cinco consultas estão em [sql/Tarefa4_Consultas.sql](sql/Tarefa4_Consultas.sql), escritas para
 SQLite e comentadas uma a uma.
 
+**Porquê SQL escrito à mão, se a aplicação não tem nenhum.** A aplicação acede à base de dados só
+através do Entity Framework Core, um ORM: o código é C# (LINQ), verificado pelo compilador, e é o
+EF Core que gera o SQL (pode ver-se nos logs da API, no dashboard do Aspire). As consultas da
+Tarefa 4 são outra coisa: o enunciado pede-as explicitamente, e simulam o trabalho de alguém de
+reporting ou auditoria que abre a base de dados numa ferramenta e corre consultas, sem passar pela
+aplicação. Por isso ficam num ficheiro à parte, fora do código da aplicação.
+
+| | Código da aplicação | `sql/Tarefa4_Consultas.sql` |
+|---|---|---|
+| Quem usa | A própria aplicação | Uma pessoa, numa ferramenta de base de dados |
+| Como acede | EF Core (LINQ), que gera o SQL | SQL escrito à mão |
+| Se uma coluna mudar de nome | Deixa de compilar | Só falha quando alguém a corre |
+
+Um exemplo, a consulta 1 nos dois estilos:
+
+```sql
+SELECT COUNT(*) FROM Pedidos WHERE EstadoAtual = 'Aprovado';
+```
+
+```csharp
+var aprovados = await db.Pedidos.CountAsync(p => p.EstadoAtual == Decisao.Aprovado);
+```
+
+Decisões sobre cada consulta:
+
 - **"Terminado com o estado X" é o estado atual do pedido** (`EstadoAtual`), e não a decisão do
   motor. Um pedido que o motor mandou para análise manual e o analista aprovou conta como aprovado.
 - **Os pedidos ainda em análise manual aparecem na consulta 2** como estado próprio: são os que
@@ -283,15 +332,17 @@ SQLite e comentadas uma a uma.
   não os outros motivos dos mesmos pedidos. **Em caso de empate, aparecem todos os motivos
   empatados**, em vez de um escolhido ao acaso. Os pedidos recusados por um analista não têm motivo
   automático de recusa; a justificação deles está na observação do histórico.
-- **"Último mês" (consulta 4)** é desde o mesmo dia do mês anterior até agora, em UTC como as datas
-  gravadas. Só entram pedidos com NIF válido, porque só esses estão ligados a um cliente. As
-  simulações não entram, porque não são gravadas (ver [Limitações](#limitações-conhecidas)).
+- **Pedidos e simulações contam juntos (consulta 4).** A consulta junta as duas tabelas numa só
+  lista com `UNION ALL` e conta por cliente: 2 pedidos, 2 simulações, ou 1 pedido e 1 simulação
+  contam todos como "mais do que um". O resultado mostra também quantos são de cada tipo.
+  **"Último mês"** é desde o mesmo dia do mês anterior até agora, em UTC como as datas gravadas. Só
+  entram registos com NIF válido, porque só esses estão ligados a um cliente.
 - **Análise manual para aprovado (consulta 5)** lê o histórico de estados, que é o registo de
   auditoria. O ficheiro inclui também a versão que só usa a tabela `Pedidos`, que hoje dá o mesmo
   resultado porque um pedido só pode ser decidido uma vez.
 - **Testadas com dados preparados para cada caso:** pedidos aprovados pelo motor e pelo analista,
-  recusas por regras diferentes, um empate de motivos e pedidos com datas antigas (que a consulta 4
-  tem de deixar de fora).
+  recusas por regras diferentes, um empate de motivos, simulações, e pedidos e simulações com datas
+  antigas (que a consulta 4 tem de deixar de fora).
 
 ---
 
@@ -325,6 +376,7 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | 7 | Decisão do analista sobre os pedidos em análise manual. |
 | 8 | Este documento (DECISIONS.md). |
 | 9 | Consultas SQL da Tarefa 4. |
+| 10 | Registo das simulações, para a consulta 4 contar pedidos e simulações. |
 
 ---
 
@@ -335,8 +387,6 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 - **Dois analistas ao mesmo tempo:** se ambos abrirem o mesmo pedido e decidirem quase em
   simultâneo, as duas decisões podem ficar gravadas e vale a última. Em produção, a gravação teria
   de confirmar que o estado não mudou entretanto.
-- **As simulações não são gravadas**, por isso a consulta "clientes com mais de um
-  pedido/simulação no último mês" só consegue contar pedidos submetidos.
 - **Sem migrações de base de dados:** mudar o modelo obriga a recriar a `caixa.db`.
 - **SQLite:** chega bem para uma aplicação local, mas não foi pensado para muitos utilizadores a
   gravar ao mesmo tempo.

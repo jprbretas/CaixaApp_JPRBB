@@ -8,6 +8,7 @@
 -- Pedidos.DecisaoAutomatica = a decisão do motor, nunca muda.
 -- Pedidos.EstadoAtual       = o estado em que o pedido está agora (muda se um analista decidir).
 -- HistoricoEstados          = uma linha por cada mudança de estado.
+-- Simulacoes                = uma linha por cada simulação (botão "Analisar"); não são pedidos.
 --
 -- "Terminado com o estado X" é lido como o estado atual do pedido (Pedidos.EstadoAtual).
 -- =====================================================================================
@@ -62,21 +63,31 @@ WHERE Ocorrencias = (SELECT MAX(Ocorrencias) FROM Contagem);
 
 
 -- -------------------------------------------------------------------------------------
--- 4. Clientes que fizeram mais do que um pedido no último mês
+-- 4. Clientes que realizaram mais do que um pedido/simulação no último mês
+--    Junta pedidos e simulações numa só lista ("Atividade") com UNION ALL e conta por cliente:
+--    2 pedidos, 2 simulações, ou 1 pedido + 1 simulação, todos contam como "mais do que um".
 --    "Último mês" = desde o mesmo dia do mês anterior até agora (em UTC, como as datas).
---    Só entram pedidos com NIF válido, porque só esses estão ligados a um cliente.
---    Nota: as simulações (botão "Analisar") não são gravadas, por isso não são contadas.
+--    Só entram registos com NIF válido, porque só esses estão ligados a um cliente.
 -- -------------------------------------------------------------------------------------
+WITH Atividade AS (
+    SELECT ClienteId, DataSubmissao AS Data, 'Pedido' AS Tipo
+    FROM Pedidos
+    UNION ALL
+    SELECT ClienteId, DataSimulacao AS Data, 'Simulacao' AS Tipo
+    FROM Simulacoes
+)
 SELECT c.Nif,
-       COUNT(*)             AS Pedidos,
-       MIN(p.DataSubmissao) AS PrimeiroPedido,
-       MAX(p.DataSubmissao) AS UltimoPedido
-FROM Pedidos p
-JOIN Clientes c ON c.Id = p.ClienteId
-WHERE p.DataSubmissao >= datetime('now', '-1 month')
+       COUNT(*)                                              AS Total,
+       SUM(CASE WHEN a.Tipo = 'Pedido' THEN 1 ELSE 0 END)    AS Pedidos,
+       SUM(CASE WHEN a.Tipo = 'Simulacao' THEN 1 ELSE 0 END) AS Simulacoes,
+       MIN(a.Data)                                           AS Primeiro,
+       MAX(a.Data)                                           AS Ultimo
+FROM Atividade a
+JOIN Clientes c ON c.Id = a.ClienteId
+WHERE a.Data >= datetime('now', '-1 month')
 GROUP BY c.Id, c.Nif
 HAVING COUNT(*) > 1
-ORDER BY Pedidos DESC, c.Nif;
+ORDER BY Total DESC, c.Nif;
 
 
 -- -------------------------------------------------------------------------------------

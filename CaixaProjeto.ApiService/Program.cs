@@ -51,8 +51,10 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/", () => "API de pré-análise de crédito em execução.");
 
-// Pré-análise: aplica as regras e devolve o resultado, sem gravar nada
-app.MapPost("/api/pedidos/preanalise", (PedidoCredito pedido, MotorDecisao motor) => motor.Analisar(pedido))
+// Pré-análise (simulação): aplica as regras, regista a simulação e devolve o resultado.
+// Não cria pedido; a simulação só conta para estatística.
+app.MapPost("/api/pedidos/preanalise", async (PedidoCredito pedido, PedidoService servico, CancellationToken ct) =>
+        await servico.SimularAsync(pedido, ct))
     .WithName("PreAnalisarPedido");
 
 // Submissão: analisa e grava o pedido, devolvendo o número atribuído

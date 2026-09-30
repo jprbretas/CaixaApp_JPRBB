@@ -65,7 +65,7 @@
             </div>
 
             <div class="mt-4">
-                @* "Analisar" só simula; "Submeter pedido" analisa e grava na BD *@
+                @* "Analisar" simula (fica registada como simulação); "Submeter pedido" cria o pedido *@
                 <button type="submit" class="btn btn-outline-primary" disabled="@aTrabalhar">Analisar</button>
                 <button type="button" class="btn btn-primary" disabled="@aTrabalhar" @onclick="SubmeterAsync">Submeter pedido</button>
                 <button type="button" class="btn btn-link" @onclick="Limpar">Limpar</button>
@@ -86,7 +86,7 @@
             }
             else
             {
-                <div class="alert alert-light border">Simulação: o pedido ainda não foi gravado.</div>
+                <div class="alert alert-light border">Simulação: o pedido ainda não foi submetido.</div>
             }
             <ResultadoView Resultado="resultado" />
         }

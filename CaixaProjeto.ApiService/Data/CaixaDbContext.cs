@@ -12,6 +12,7 @@ public class CaixaDbContext(DbContextOptions<CaixaDbContext> options) : DbContex
     public DbSet<Pedido> Pedidos => Set<Pedido>();
     public DbSet<MotivoPedido> MotivosPedido => Set<MotivoPedido>();
     public DbSet<HistoricoEstado> HistoricoEstados => Set<HistoricoEstado>();
+    public DbSet<Simulacao> Simulacoes => Set<Simulacao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +38,13 @@ public class CaixaDbContext(DbContextOptions<CaixaDbContext> options) : DbContex
         });
 
         modelBuilder.Entity<MotivoPedido>().Property(m => m.Decisao).HasConversion<string>();
+
+        modelBuilder.Entity<Simulacao>(e =>
+        {
+            e.HasIndex(s => s.DataSimulacao);
+            e.Property(s => s.SituacaoProfissional).HasConversion<string>();
+            e.Property(s => s.Decisao).HasConversion<string>();
+        });
 
         modelBuilder.Entity<HistoricoEstado>(e =>
         {

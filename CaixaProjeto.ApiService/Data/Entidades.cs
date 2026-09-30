@@ -13,6 +13,7 @@ public class Cliente
     public DateTime DataRegisto { get; set; }
 
     public List<Pedido> Pedidos { get; set; } = [];
+    public List<Simulacao> Simulacoes { get; set; } = [];
 }
 
 /// <summary>
@@ -52,6 +53,34 @@ public class Pedido
 
     public List<MotivoPedido> Motivos { get; set; } = [];
     public List<HistoricoEstado> Historico { get; set; } = [];
+}
+
+/// <summary>
+/// Uma simulação (botão "Analisar"): o cliente viu o resultado, mas não submeteu o pedido.
+/// Fica numa tabela própria, e não em Pedidos, porque não é um pedido: não tem número,
+/// não tem estado e não vai ao analista. Serve para estatística (Tarefa 4: "pedido/simulação").
+/// </summary>
+public class Simulacao
+{
+    public int Id { get; set; }
+
+    // Tal como nos pedidos, só há cliente quando o NIF é válido
+    public int? ClienteId { get; set; }
+    public Cliente? Cliente { get; set; }
+
+    // Dados de entrada
+    public string? Nif { get; set; }
+    public int Idade { get; set; }
+    public decimal RendimentoMensalLiquido { get; set; }
+    public decimal PrestacoesAtuais { get; set; }
+    public decimal ValorPretendido { get; set; }
+    public int PrazoMeses { get; set; }
+    public SituacaoProfissional? SituacaoProfissional { get; set; }
+    public bool IncidentesCredito { get; set; }
+
+    // Resultado que o cliente viu
+    public Decisao Decisao { get; set; }
+    public DateTime DataSimulacao { get; set; }
 }
 
 /// <summary>Um motivo da decisão automática (uma linha por regra que disparou).</summary>
