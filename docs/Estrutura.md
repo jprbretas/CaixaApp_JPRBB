@@ -80,8 +80,10 @@ Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, Rendim
 
 | Ficheiro | Para que serve |
 |---|---|
+| `README.md` (na raiz) | A porta de entrada: o que a aplicação faz, como correr e onde está a resposta a cada tarefa do enunciado. |
 | `DECISIONS.md` (na raiz) | As decisões de design e desenvolvimento e porquê, para explicar como a aplicação foi feita. |
 | `docs/Estrutura.md` | Este guia dos ficheiros. |
+| `docs/Tarefa1_Analise_Funcional.md` | Resposta à Tarefa 1: interpretação das regras, ordem, casos ambíguos, perguntas ao negócio, user stories e o modelo de dados (com diagrama). |
 | `docs/Tarefa5_Melhoria_da_Solucao.md` | Resposta à Tarefa 5: melhorias técnicas, testes adicionais e dados para auditoria e reporting. |
 | `docs/Tarefa6_Resolucao_de_Problemas.md` | Resposta à Tarefa 6: o reporte "Não consigo pedir o crédito", com a informação em falta, como a obter, as hipóteses de erro e as equipas a envolver. |
 

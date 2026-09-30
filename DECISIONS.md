@@ -2,9 +2,8 @@
 
 Este ficheiro explica as escolhas que fiz na aplicação de pré-análise de crédito pessoal e porquê.
 Começa pelas três decisões mais importantes; as secções seguintes dão os detalhes. O guia de cada
-ficheiro está em [docs/Estrutura.md](docs/Estrutura.md). As respostas escritas às Tarefas 5 e 6 do
-enunciado estão em [docs/Tarefa5_Melhoria_da_Solucao.md](docs/Tarefa5_Melhoria_da_Solucao.md) e
-[docs/Tarefa6_Resolucao_de_Problemas.md](docs/Tarefa6_Resolucao_de_Problemas.md).
+ficheiro está em [docs/Estrutura.md](docs/Estrutura.md), e o [README](README.md) diz onde está a
+resposta a cada tarefa do enunciado.
 
 **Índice:**
 [As três decisões principais](#as-três-decisões-principais) ·
@@ -417,6 +416,7 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | 10 | Registo das simulações, para a consulta 4 contar pedidos e simulações. |
 | 11 | Testes automáticos do serviço, da base de dados, dos endpoints e das consultas SQL. |
 | 12 | Respostas escritas às Tarefas 5 (melhorias para produção) e 6 (resolução de problemas). |
+| 13 | Resposta completa à Tarefa 1, com as user stories, e o README com o índice das respostas. |
 
 ---
 
@@ -435,7 +435,9 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 - **O teste da aplicação inteira (`CaixaProjeto.Tests`) usa a `caixa.db` verdadeira**, porque arranca
   a API com a configuração normal. Só abre a base de dados, não escreve nela, mas o ideal seria
   dar-lhe uma base de dados própria.
-- **Por fazer:** a proposta de solução em formato de user story (Tarefa 1, pergunta 5).
+- **Número do pedido em concorrência:** dois pedidos submetidos no mesmo instante podem calcular o
+  mesmo número; o índice único impede o duplicado, mas um deles falha. Em produção, o número viria
+  de uma sequência da base de dados.
 
 O que mudaria para levar a aplicação para produção está na
 [Tarefa 5](docs/Tarefa5_Melhoria_da_Solucao.md).
