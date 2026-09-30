@@ -19,7 +19,8 @@ public class RelogioDeTeste(DateTimeOffset agora) : TimeProvider
 }
 
 /// <summary>
-/// Uma base de dados SQLite em memória, com as mesmas tabelas da caixa.db (criadas pelo EnsureCreated).
+/// Uma base de dados SQLite em memória, criada pelas mesmas migrações que criam a caixa.db.
+/// Assim os testes confirmam também que as migrações dão uma base de dados que funciona.
 /// Só existe enquanto a ligação estiver aberta. O xUnit cria uma instância da classe de testes
 /// por cada teste, por isso cada teste tem a sua base de dados vazia e os testes não se misturam.
 /// </summary>
@@ -36,7 +37,7 @@ public sealed class BaseDadosDeTeste : IDisposable
         Conexao.Open();
 
         using var db = NovoContexto();
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
     }
 
     /// <summary>Um DbContext novo sobre a mesma base de dados.</summary>

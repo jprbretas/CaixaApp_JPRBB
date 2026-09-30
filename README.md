@@ -14,7 +14,8 @@ dados e **.NET Aspire** para arrancar tudo de uma vez.
 ## Como correr
 
 **Requisitos:** o SDK do .NET 10 e, de preferência, o Visual Studio 2026. Não é preciso instalar
-nenhuma base de dados: o ficheiro `caixa.db` é criado sozinho no primeiro arranque.
+nenhuma base de dados: o ficheiro `caixa.db` é criado sozinho no primeiro arranque, e atualizado
+sozinho (migrações) quando a estrutura muda.
 
 **No Visual Studio:** abrir `CaixaProjeto.slnx`, escolher `CaixaProjeto.AppHost` como projeto de
 arranque e carregar em F5. Abre-se o dashboard do Aspire; o link **"Abrir a aplicação"**, no serviço
@@ -28,7 +29,7 @@ dotnet run --project CaixaProjeto.AppHost
 
 O endereço do dashboard aparece no terminal.
 
-**Testes** (89: 37 das regras, 41 da API e da base de dados, 10 da Web, 1 da aplicação inteira):
+**Testes** (92: 37 das regras, 44 da API e da base de dados, 10 da Web, 1 da aplicação inteira):
 
 ```bash
 dotnet test CaixaProjeto.slnx

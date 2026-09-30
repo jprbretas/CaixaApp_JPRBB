@@ -13,6 +13,7 @@ resposta a cada tarefa do enunciado.
 [Casos não previstos e perguntas ao negócio](#casos-não-previstos-e-perguntas-ao-negócio) ·
 [Testes](#testes) ·
 [Base de dados](#base-de-dados) ·
+[Migrações](#migrações) ·
 [API](#api) ·
 [Interface](#interface) ·
 [Simulações](#simulações) ·
@@ -173,7 +174,7 @@ que é essa mudança que provoca o resultado.
   e a decisão mais restritiva.
 - **Parâmetros:** mudar um limite na configuração muda a decisão.
 
-**41 testes da API e da base de dados** (`CaixaProjeto.ApiTests`), acrescentados no passo 11, com
+**44 testes da API e da base de dados** (`CaixaProjeto.ApiTests`), acrescentados no passo 11, com
 uma base de dados SQLite verdadeira, mas em memória:
 
 - **Serviço** (`PedidoServiceTests.cs`): o que fica gravado ao submeter (pedido, motivos, histórico,
@@ -194,8 +195,11 @@ Decisões sobre estes testes:
 - **Um projeto novo, e não mais testes no `UnitTests`.** O `UnitTests` só depende do Core e corre em
   menos de um segundo; mantê-lo assim deixa claro que as regras não precisam de base de dados.
 - **SQLite em memória, e não uma base de dados falsa.** É o mesmo motor de base de dados da
-  aplicação, com as tabelas criadas pelo mesmo `EnsureCreated`. Cada teste tem a sua base de dados
-  vazia, por isso os testes não dependem uns dos outros nem da ordem em que correm.
+  aplicação, com as tabelas criadas pelas mesmas migrações que criam a `caixa.db` (passo 15). Cada
+  teste tem a sua base de dados vazia, por isso os testes não dependem uns dos outros nem da ordem
+  em que correm.
+- **Um teste que apanha migrações esquecidas** (`MigracoesTests.cs`): se alguém mudar uma entidade
+  e se esquecer de criar a migração, o teste falha e diz o comando a correr.
 - **Os testes nunca tocam na `caixa.db`.** Os testes dos endpoints substituem a ligação à base de
   dados por uma em memória. Confirmei que a `caixa.db` ficou igual depois de os correr.
 - **Um relógio de teste.** O `PedidoService` recebe a hora através de um `TimeProvider`, por isso os
@@ -212,7 +216,7 @@ com uma base de dados de teste.
 uma API falsa, que devolve a resposta que o teste quiser, confirmam que "a API não responde" e "a API
 respondeu com um erro" dão mensagens diferentes, e que o código para o suporte chega à mensagem.
 
-**No total: 89 testes** (37 do motor, 41 da API e da base de dados, 10 da Web, 1 da aplicação
+**No total: 92 testes** (37 do motor, 44 da API e da base de dados, 10 da Web, 1 da aplicação
 inteira).
 
 ---
@@ -253,9 +257,48 @@ Simulacoes       (Id, ClienteId → Clientes (NULL se o NIF for inválido),
   as consultas podem somar e comparar valores diretamente.
 - **Datas em UTC** na base de dados, convertidas para a hora local só no ecrã.
 - **A submissão grava tudo numa só transação:** pedido, cliente, motivos e histórico, ou nada.
-- **As tabelas são criadas no arranque** (`EnsureCreated`), sem migrações. É simples para esta
-  fase, mas tem um custo: quando se acrescenta uma coluna, é preciso apagar a `caixa.db` para ser
-  criada de novo. Aconteceu uma vez, ao acrescentar `LimiteMontante`.
+- **A estrutura da base de dados é gerida por migrações** (passo 15). Ver
+  [Migrações](#migrações).
+
+---
+
+## Migrações
+
+Até ao passo 14, as tabelas eram criadas no arranque com o `EnsureCreated`, que só cria a base de
+dados se ela ainda não existir e nunca a altera depois. Cada mudança no modelo obrigava a apagar a
+`caixa.db` e perder os dados: aconteceu com a coluna `LimiteMontante` (passo 6) e com a tabela
+`Simulacoes` (passo 10). No passo 15 passei para **migrações do Entity Framework**.
+
+- **Uma migração é um ficheiro C# com a mudança**, na pasta `CaixaProjeto.ApiService/Data/Migrations`:
+  o método `Up` aplica-a ("acrescentar a coluna X") e o `Down` desfaz-a. A primeira, `Inicial`,
+  cria as 5 tabelas e os índices. O `CaixaDbContextModelSnapshot.cs` guarda como o modelo está, para
+  a migração seguinte saber o que mudou.
+- **A aplicação aplica as migrações em falta ao arrancar** (`Database.Migrate()` no `Program.cs`). A
+  tabela `__EFMigrationsHistory`, dentro da base de dados, regista as que já foram aplicadas, por isso
+  cada uma só corre uma vez.
+- **As migrações ficam no git**, junto com o código que as pede. Quem tiver uma versão antiga da base
+  de dados recebe só as mudanças que lhe faltam.
+- **A ferramenta está no repositório** (`dotnet-tools.json`, com o `dotnet-ef` 10.0.12). Quem clonar o
+  projeto corre `dotnet tool restore` e fica com a mesma versão.
+- **Os testes usam as migrações**, e não o `EnsureCreated`, e há um teste que falha se o modelo mudar
+  sem migração (ver [Testes](#testes)).
+
+**Provado com dados:** numa cópia do projeto, criei 2 pedidos com a versão atual, acrescentei uma
+coluna de exemplo, criei a migração e arranquei a cópia sobre a mesma base de dados. A aplicação
+aplicou só a migração nova, a coluna apareceu e os 2 pedidos continuaram lá. (A coluna de exemplo
+não ficou no projeto.)
+
+**Para uma mudança futura no modelo:** alterar a entidade, correr
+
+```bash
+dotnet ef migrations add NomeDaMudanca --project CaixaProjeto.ApiService --output-dir Data/Migrations
+```
+
+rever o ficheiro criado e arrancar a aplicação.
+
+**Uma nota para produção:** aplicar as migrações no arranque é prático aqui, mas com várias cópias
+da API a arrancar ao mesmo tempo, ou quando uma migração demora, o habitual é aplicá-las num passo
+próprio da entrega (ver a [Tarefa 5](docs/Tarefa5_Melhoria_da_Solucao.md)).
 
 ---
 
@@ -457,6 +500,7 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | 12 | Respostas escritas às Tarefas 5 (melhorias para produção) e 6 (resolução de problemas). |
 | 13 | Resposta completa à Tarefa 1, com as user stories, e o README com o índice das respostas. |
 | 14 | Melhorias que nasceram da Tarefa 6: NIF com espaços e mensagens de erro distintas, com código para o suporte. |
+| 15 | Migrações do Entity Framework: mudanças no modelo sem apagar a base de dados. |
 
 ---
 
@@ -467,7 +511,6 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 - **Dois analistas ao mesmo tempo:** se ambos abrirem o mesmo pedido e decidirem quase em
   simultâneo, as duas decisões podem ficar gravadas e vale a última. Em produção, a gravação teria
   de confirmar que o estado não mudou entretanto.
-- **Sem migrações de base de dados:** mudar o modelo obriga a recriar a `caixa.db`.
 - **SQLite:** chega bem para uma aplicação local, mas não foi pensado para muitos utilizadores a
   gravar ao mesmo tempo.
 - **As páginas não têm testes automáticos**; foram testadas à mão no browser (o cliente HTTP da

@@ -30,9 +30,12 @@ que mudaria para produção, por ordem de prioridade dentro de cada secção.
 
 - **SQL Server (ou PostgreSQL) em vez de SQLite.** O SQLite não foi pensado para muitos utilizadores
   a gravar ao mesmo tempo, nem para backups e alta disponibilidade.
-- **Migrações do Entity Framework em vez do `EnsureCreated`.** Hoje, acrescentar uma coluna obriga a
-  apagar a base de dados (durante o desenvolvimento, os passos 6 e 10 obrigaram a isso). Com migrações, cada
-  alteração é aplicada à base de dados existente, sem perder dados, e fica versionada no git.
+- **Migrações do Entity Framework em vez do `EnsureCreated`.** Acrescentar uma coluna obrigava a
+  apagar a base de dados (durante o desenvolvimento, os passos 6 e 10 obrigaram a isso). *Já feito no
+  passo 15:* cada alteração é aplicada à base de dados existente, sem perder dados, e fica versionada
+  no git. Para produção faltaria aplicar as migrações num passo próprio da entrega (um script SQL
+  revisto ou um "migration bundle"), e não no arranque da API, por causa de várias cópias da API a
+  arrancar ao mesmo tempo e de migrações demoradas.
 - **Backups automáticos** e um teste periódico de reposição.
 - **Um índice em `EstadoAtual`**, porque a lista e as consultas filtram por esse campo.
 
@@ -76,7 +79,7 @@ Dois problemas que só aparecem com vários utilizadores ao mesmo tempo:
   com um erro interno. *Já feito no passo 14:* as duas situações têm mensagens diferentes e, quando a
   API responde com um erro, a página mostra o código (o `traceId`) para o suporte encontrar o erro
   nos logs.
-- **Pipeline de entrega contínua** (por exemplo, GitHub Actions): compilar, correr os 89 testes e
+- **Pipeline de entrega contínua** (por exemplo, GitHub Actions): compilar, correr os 92 testes e
   publicar em ambientes separados (desenvolvimento, testes, produção), com aprovação antes de
   produção.
 - **Versionar a API** (`/api/v1/...`) e publicar a documentação OpenAPI, que hoje só existe em
@@ -86,7 +89,7 @@ Dois problemas que só aparecem com vários utilizadores ao mesmo tempo:
 
 ## 2. Testes adicionais
 
-A aplicação tem 89 testes automáticos: 37 das regras, 41 do serviço, da API e das consultas SQL, 10
+A aplicação tem 92 testes automáticos: 37 das regras, 44 do serviço, da API, das consultas SQL e das migrações, 10
 do cliente HTTP da Web e 1 que arranca a aplicação inteira. Acrescentaria:
 
 | Teste | Para quê |

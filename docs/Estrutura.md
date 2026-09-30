@@ -47,14 +47,15 @@ Browser ──► CaixaProjeto.Web (Blazor) ──HTTP──► CaixaProjeto.Api
 
 | Ficheiro | Para que serve |
 |---|---|
-| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD e expõe `POST /api/pedidos/preanalise` (simula e regista a simulação), `POST /api/pedidos` (analisa e grava) e `GET /api/pedidos` (lista paginada, com filtro opcional `?estado=`), `GET /api/pedidos/{numero}` (detalhe, ou 404 se não existir) e `POST /api/pedidos/{numero}/decisao` (decisão do analista; os erros vêm em formato Problem Details com 400, 404 ou 409). |
+| `Program.cs` | Arranque da API. Lê a secção `Regras` do appsettings, regista o `MotorDecisao`, liga a BD, aplica as migrações em falta ao arrancar (`Database.Migrate()`) e expõe `POST /api/pedidos/preanalise` (simula e regista a simulação), `POST /api/pedidos` (analisa e grava) e `GET /api/pedidos` (lista paginada, com filtro opcional `?estado=`), `GET /api/pedidos/{numero}` (detalhe, ou 404 se não existir) e `POST /api/pedidos/{numero}/decisao` (decisão do analista; os erros vêm em formato Problem Details com 400, 404 ou 409). |
 | `appsettings.json` | Configuração: limites das regras e a ligação à BD (`ConnectionStrings:caixa`). |
 | `Data/Entidades.cs` | As tabelas: `Cliente`, `Pedido`, `MotivoPedido`, `HistoricoEstado` e `Simulacao`. |
 | `Data/CaixaDbContext.cs` | A "porta" para a BD (EF Core). Define índices (NIF e número únicos), grava os enums como texto e os decimais como número. |
 | `Services/PedidoService.cs` | Junta motor e BD. `SimularAsync` analisa e regista a simulação, sem criar pedido. `SubmeterAsync` analisa o pedido, atribui o número (ano + sequência, ex. 20260001), liga-o ao cliente pelo NIF e grava motivos e histórico. `ListarAsync` devolve uma página da lista, do mais recente para o mais antigo. `ObterAsync` lê um pedido com motivos e histórico, tal como foi gravado (o motor não volta a correr). `DecidirAsync` aplica a decisão do analista: só em pedidos em ANÁLISE MANUAL, com nome e observação obrigatórios; muda o `EstadoAtual` e acrescenta uma linha ao histórico. |
 | `Services/ResultadoDecisao.cs` | Os resultados possíveis da decisão do analista (`Decidido`, `DadosEmFalta`, `NaoEncontrado`, `NaoAguardaAnalista`), que o `Program.cs` traduz em códigos HTTP. |
 | `CaixaProjeto.ApiService.http` | Pedidos de exemplo que se podem enviar diretamente do Visual Studio (botão "Send request"). |
-| `caixa.db` | O ficheiro SQLite. É criado no primeiro arranque (`EnsureCreated`) e não vai para o git. Apagar = recomeçar do zero. |
+| `Data/Migrations/` | As migrações do Entity Framework: `..._Inicial.cs` cria as tabelas (métodos `Up` e `Down`) e o `CaixaDbContextModelSnapshot.cs` guarda o modelo atual, para a próxima migração saber o que mudou. Criadas com `dotnet ef migrations add`. |
+| `caixa.db` | O ficheiro SQLite. É criado no primeiro arranque e atualizado pelas migrações; não vai para o git. Apagar = recomeçar do zero. |
 
 ### Modelo de dados
 
@@ -84,6 +85,7 @@ Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, Rendim
 | `README.md` (na raiz) | A porta de entrada: o que a aplicação faz, como correr e onde está a resposta a cada tarefa do enunciado. |
 | `DECISIONS.md` (na raiz) | As decisões de design e desenvolvimento e porquê, para explicar como a aplicação foi feita. |
 | `docs/Estrutura.md` | Este guia dos ficheiros. |
+| `dotnet-tools.json` (na raiz) | As ferramentas do projeto: o `dotnet-ef` (migrações), na versão certa. Instala-se com `dotnet tool restore`. |
 | `docs/Tarefa1_Analise_Funcional.md` | Resposta à Tarefa 1: interpretação das regras, ordem, casos ambíguos, perguntas ao negócio, user stories e o modelo de dados (com diagrama). |
 | `docs/Tarefa5_Melhoria_da_Solucao.md` | Resposta à Tarefa 5: melhorias técnicas, testes adicionais e dados para auditoria e reporting. |
 | `docs/Tarefa6_Resolucao_de_Problemas.md` | Resposta à Tarefa 6: o reporte "Não consigo pedir o crédito", com a informação em falta, como a obter, as hipóteses de erro e as equipas a envolver. |
@@ -98,9 +100,10 @@ Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, Rendim
 
 | Ficheiro | Para que serve |
 |---|---|
-| `BaseDadosDeTeste.cs` | Cria uma base de dados SQLite em memória com as tabelas da aplicação, um relógio de teste (`RelogioDeTeste`) que marca a hora que o teste quiser e os pedidos de exemplo (`Exemplos`). |
+| `BaseDadosDeTeste.cs` | Cria uma base de dados SQLite em memória, com as mesmas migrações da aplicação, um relógio de teste (`RelogioDeTeste`) que marca a hora que o teste quiser e os pedidos de exemplo (`Exemplos`). |
 | `PedidoServiceTests.cs` | Testes do `PedidoService`: submeter, simular, listar, obter o detalhe e a decisão do analista. |
 | `EndpointsTests.cs` | Arranca a API dentro dos testes (`WebApplicationFactory`, classe `ApiDeTeste`) com uma base de dados em memória e testa as respostas HTTP: 200, 400, 404 e 409. |
+| `MigracoesTests.cs` | Confirma que não há mudanças no modelo sem migração, que as migrações foram todas aplicadas e que criam as tabelas todas. |
 | `ConsultasTarefa4Tests.cs` | Lê o `sql/Tarefa4_Consultas.sql`, corre cada consulta sobre dados preparados e confere os resultados. |
 
 ## CaixaProjeto.WebTests

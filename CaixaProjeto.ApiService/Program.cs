@@ -34,11 +34,12 @@ builder.Services.AddScoped<PedidoService>();
 
 var app = builder.Build();
 
-// Cria a BD e as tabelas no primeiro arranque, se ainda não existirem.
-// Para recomeçar do zero, basta apagar o ficheiro caixa.db.
+// Aplica as migrações que faltam (pasta Data/Migrations): no primeiro arranque cria a BD e as tabelas;
+// depois de uma mudança no modelo, acrescenta só o que mudou, sem apagar os dados.
+// A tabela __EFMigrationsHistory, dentro da BD, regista as migrações já aplicadas.
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<CaixaDbContext>().Database.EnsureCreated();
+    scope.ServiceProvider.GetRequiredService<CaixaDbContext>().Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.
