@@ -34,6 +34,7 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
             PrestacaoEstimada = resultado.Indicadores?.PrestacaoEstimada,
             TaxaEsforco = resultado.Indicadores?.TaxaEsforco,
             IdadeFinalContrato = resultado.Indicadores?.IdadeFinalContrato,
+            LimiteMontante = resultado.Indicadores?.LimiteMontante,
             DecisaoAutomatica = resultado.Decisao,
             EstadoAtual = resultado.Decisao,
             DataSubmissao = agora,
@@ -101,6 +102,69 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
             .ToListAsync(ct);
 
         return new Pagina<PedidoResumo>(itens, total, numeroPagina, tamanhoPagina);
+    }
+
+    /// <summary>
+    /// Tudo o que se sabe de um pedido, pelo número. Devolve null se o pedido não existir.
+    /// Os dados vêm da BD tal como foram gravados: o motor não volta a correr.
+    /// </summary>
+    public async Task<PedidoDetalhe?> ObterAsync(string numero, CancellationToken ct = default)
+    {
+        // Include: traz também as linhas das tabelas MotivosPedido e HistoricoEstados deste pedido.
+        // AsNoTracking: só vamos ler, por isso o EF não precisa de vigiar alterações.
+        var pedido = await db.Pedidos
+            .Include(p => p.Motivos)
+            .Include(p => p.Historico)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Numero == numero, ct);
+
+        if (pedido is null)
+        {
+            return null;
+        }
+
+        var dados = new PedidoCredito
+        {
+            Nif = pedido.Nif,
+            Idade = pedido.Idade,
+            RendimentoMensalLiquido = pedido.RendimentoMensalLiquido,
+            PrestacoesAtuais = pedido.PrestacoesAtuais,
+            ValorPretendido = pedido.ValorPretendido,
+            PrazoMeses = pedido.PrazoMeses,
+            SituacaoProfissional = pedido.SituacaoProfissional,
+            IncidentesCredito = pedido.IncidentesCredito
+        };
+
+        // Os motivos pela ordem em que foram gravados (a ordem das regras)
+        var motivos = pedido.Motivos
+            .OrderBy(m => m.Id)
+            .Select(m => new Motivo(m.Regra, m.Descricao, m.Decisao))
+            .ToList();
+
+        // Um pedido inválido não tem indicadores (ficaram a null na BD)
+        Indicadores? indicadores = null;
+        if (pedido.PrestacaoEstimada is not null
+            && pedido.TaxaEsforco is not null
+            && pedido.IdadeFinalContrato is not null
+            && pedido.LimiteMontante is not null)
+        {
+            indicadores = new Indicadores(
+                pedido.PrestacaoEstimada.Value,
+                pedido.TaxaEsforco.Value,
+                pedido.IdadeFinalContrato.Value,
+                pedido.LimiteMontante.Value);
+        }
+
+        var resultado = new ResultadoAnalise(pedido.DecisaoAutomatica, motivos, indicadores);
+
+        // O histórico do mais antigo para o mais recente
+        var historico = pedido.Historico
+            .OrderBy(h => h.Data)
+            .ThenBy(h => h.Id)
+            .Select(h => new EstadoHistorico(h.EstadoAnterior, h.EstadoNovo, h.Data, h.Utilizador, h.Observacao))
+            .ToList();
+
+        return new PedidoDetalhe(pedido.Numero, pedido.DataSubmissao, dados, resultado, pedido.EstadoAtual, historico);
     }
 
     /// <summary>Número legível: ano + sequência de 4 dígitos (20260001, 20260002, ...).</summary>

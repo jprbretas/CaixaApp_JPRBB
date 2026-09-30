@@ -43,6 +43,7 @@ public class Pedido
     public decimal? PrestacaoEstimada { get; set; }
     public decimal? TaxaEsforco { get; set; }
     public decimal? IdadeFinalContrato { get; set; }
+    public decimal? LimiteMontante { get; set; }        // Regra 5: gravado para o detalhe mostrar o limite que decidiu
 
     // Decisão
     public Decisao DecisaoAutomatica { get; set; }

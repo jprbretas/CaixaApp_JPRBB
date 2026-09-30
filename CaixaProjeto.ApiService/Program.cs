@@ -65,6 +65,19 @@ app.MapGet("/api/pedidos", async (Decisao? estado, int? pagina, int? tamanho, Pe
         await servico.ListarAsync(estado, pagina ?? 1, tamanho ?? 20, ct))
     .WithName("ListarPedidos");
 
+// Detalhe de um pedido: dados, resultado da análise, estado atual e histórico.
+// Se o número não existir, responde 404 (Not Found).
+app.MapGet("/api/pedidos/{numero}", async (string numero, PedidoService servico, CancellationToken ct) =>
+    {
+        var detalhe = await servico.ObterAsync(numero, ct);
+        if (detalhe is null)
+        {
+            return Results.NotFound();
+        }
+        return Results.Ok(detalhe);
+    })
+    .WithName("ObterPedido");
+
 app.MapDefaultEndpoints();
 
 app.Run();

@@ -27,3 +27,9 @@ GET {{ApiService_HostAddress}}/api/pedidos?estado=AnaliseManual&pagina=1&tamanho
 Accept: application/json
 
 ###
+
+# Detalhe de um pedido (troque pelo número de um pedido gravado; se não existir, a resposta é 404)
+GET {{ApiService_HostAddress}}/api/pedidos/20260001
+Accept: application/json
+
+###

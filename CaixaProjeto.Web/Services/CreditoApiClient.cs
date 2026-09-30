@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CaixaProjeto.Core.Contratos;
@@ -39,5 +40,17 @@ public class CreditoApiClient(HttpClient httpClient)
             url += $"&estado={estado}";
         }
         return (await httpClient.GetFromJsonAsync<Pagina<PedidoResumo>>(url, Json, cancellationToken))!;
+    }
+
+    /// <summary>Devolve o detalhe do pedido, ou null se a API responder 404 (o pedido não existe).</summary>
+    public async Task<PedidoDetalhe?> ObterAsync(string numero, CancellationToken cancellationToken = default)
+    {
+        var resposta = await httpClient.GetAsync($"/api/pedidos/{Uri.EscapeDataString(numero)}", cancellationToken);
+        if (resposta.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+        resposta.EnsureSuccessStatusCode();
+        return await resposta.Content.ReadFromJsonAsync<PedidoDetalhe>(Json, cancellationToken);
     }
 }

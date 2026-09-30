@@ -53,7 +53,7 @@ else
                 @foreach (var pedido in pagina.Itens)
                 {
                     <tr>
-                        <td>@pedido.Numero</td>
+                        <td><a href="pedidos/@pedido.Numero">@pedido.Numero</a></td>
                         <td>@Formatos.DataHora(pedido.DataSubmissao)</td>
                         <td>@(pedido.Nif ?? "-")</td>
                         <td class="text-end">@Formatos.Euros(pedido.ValorPretendido)</td>

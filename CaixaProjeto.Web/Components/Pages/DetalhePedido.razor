@@ -1,0 +1,142 @@
+@page "/pedidos/{Numero}"
+@using CaixaProjeto.Core.Contratos
+@using CaixaProjeto.Core.Dominio
+@using CaixaProjeto.Web.Services
+@inject CreditoApiClient Api
+
+@* Esta página só mostra dados (não tem botões), por isso não precisa de InteractiveServer:
+   o servidor gera o HTML uma vez e envia-o ao browser. *@
+
+<PageTitle>Pedido @Numero</PageTitle>
+
+<a href="pedidos" class="d-inline-block mb-3">&larr; Voltar à lista</a>
+
+@if (erro is not null)
+{
+    <div class="alert alert-danger">@erro</div>
+}
+else if (!carregado)
+{
+    <p class="text-muted">A carregar...</p>
+}
+else if (detalhe is null)
+{
+    <div class="alert alert-warning">O pedido <strong>@Numero</strong> não existe.</div>
+}
+else
+{
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <h1 class="mb-0">Pedido @detalhe.Numero</h1>
+        <span class="badge fs-6 text-bg-@Formatos.CorDecisao(detalhe.EstadoAtual)">@detalhe.EstadoAtual.Texto()</span>
+    </div>
+
+    @if (detalhe.AguardaAnalista)
+    {
+        <div class="alert alert-warning">Este pedido aguarda a decisão de um analista.</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">Dados do pedido</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-7">Data de submissão</dt>
+                        <dd class="col-5 text-end">@Formatos.DataHora(detalhe.DataSubmissao)</dd>
+                        <dt class="col-7">NIF</dt>
+                        <dd class="col-5 text-end">@(detalhe.Dados.Nif ?? "-")</dd>
+                        <dt class="col-7">Idade</dt>
+                        <dd class="col-5 text-end">@detalhe.Dados.Idade anos</dd>
+                        <dt class="col-7">Rendimento mensal líquido</dt>
+                        <dd class="col-5 text-end">@Formatos.Euros(detalhe.Dados.RendimentoMensalLiquido)</dd>
+                        <dt class="col-7">Prestações atuais</dt>
+                        <dd class="col-5 text-end">@Formatos.Euros(detalhe.Dados.PrestacoesAtuais)</dd>
+                        <dt class="col-7">Valor pretendido</dt>
+                        <dd class="col-5 text-end">@Formatos.Euros(detalhe.Dados.ValorPretendido)</dd>
+                        <dt class="col-7">Prazo</dt>
+                        <dd class="col-5 text-end">@detalhe.Dados.PrazoMeses meses</dd>
+                        <dt class="col-7">Situação profissional</dt>
+                        <dd class="col-5 text-end">@TextoSituacao(detalhe.Dados.SituacaoProfissional)</dd>
+                        <dt class="col-7">Incidentes de crédito</dt>
+                        <dd class="col-5 text-end">@(detalhe.Dados.IncidentesCredito ? "Sim" : "Não")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <h6 class="text-muted">Análise automática</h6>
+            <ResultadoView Resultado="detalhe.Resultado" />
+        </div>
+    </div>
+
+    <h4 class="mt-4">Histórico de estados</h4>
+    <div class="table-responsive">
+        <table class="table align-middle text-nowrap">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>De</th>
+                    <th>Para</th>
+                    <th>Utilizador</th>
+                    <th>Observação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var linha in detalhe.Historico)
+                {
+                    <tr>
+                        <td>@Formatos.DataHora(linha.Data)</td>
+                        <td>
+                            @if (linha.EstadoAnterior is not null)
+                            {
+                                <span class="badge text-bg-@Formatos.CorDecisao(linha.EstadoAnterior.Value)">@linha.EstadoAnterior.Value.Texto()</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td><span class="badge text-bg-@Formatos.CorDecisao(linha.EstadoNovo)">@linha.EstadoNovo.Texto()</span></td>
+                        <td>@linha.Utilizador</td>
+                        <td>@linha.Observacao</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    // Vem do URL: /pedidos/20260001 -> Numero = "20260001"
+    [Parameter] public string Numero { get; set; } = "";
+
+    private PedidoDetalhe? detalhe;
+    private bool carregado;
+    private string? erro;
+
+    // OnParametersSetAsync (e não OnInitializedAsync) para voltar a carregar se o número no URL mudar
+    protected override async Task OnParametersSetAsync()
+    {
+        erro = null;
+        try
+        {
+            detalhe = await Api.ObterAsync(Numero);
+        }
+        catch (HttpRequestException)
+        {
+            detalhe = null;
+            erro = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+        }
+        carregado = true;
+    }
+
+    private static string TextoSituacao(SituacaoProfissional? situacao)
+    {
+        if (situacao is null)
+        {
+            return "-";
+        }
+        return situacao.Value.Texto();
+    }
+}
