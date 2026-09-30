@@ -1,11 +1,12 @@
 @page "/pedidos/{Numero}"
+@rendermode InteractiveServer
 @using CaixaProjeto.Core.Contratos
 @using CaixaProjeto.Core.Dominio
 @using CaixaProjeto.Web.Services
 @inject CreditoApiClient Api
 
-@* Esta página só mostra dados (não tem botões), por isso não precisa de InteractiveServer:
-   o servidor gera o HTML uma vez e envia-o ao browser. *@
+@* InteractiveServer: a página tem botões (Aprovar / Recusar), e os cliques são tratados
+   no servidor através de uma ligação em tempo real (SignalR). *@
 
 <PageTitle>Pedido @Numero</PageTitle>
 
@@ -30,9 +31,38 @@ else
         <span class="badge fs-6 text-bg-@Formatos.CorDecisao(detalhe.EstadoAtual)">@detalhe.EstadoAtual.Texto()</span>
     </div>
 
+    @if (mensagemSucesso is not null)
+    {
+        <div class="alert alert-success">@mensagemSucesso</div>
+    }
+
     @if (detalhe.AguardaAnalista)
     {
-        <div class="alert alert-warning">Este pedido aguarda a decisão de um analista.</div>
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning bg-opacity-25">Este pedido aguarda a decisão de um analista</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="analista">Analista</label>
+                        <input id="analista" class="form-control" maxlength="100" @bind="nomeAnalista" />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label" for="observacao">Observação (porque aprova ou recusa)</label>
+                        <textarea id="observacao" class="form-control" rows="2" maxlength="500" @bind="observacao"></textarea>
+                    </div>
+                </div>
+
+                @if (erroDecisao is not null)
+                {
+                    <div class="alert alert-danger mt-3 mb-0">@erroDecisao</div>
+                }
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-success" disabled="@aDecidir" @onclick="() => DecidirAsync(true)">Aprovar</button>
+                    <button type="button" class="btn btn-danger" disabled="@aDecidir" @onclick="() => DecidirAsync(false)">Recusar</button>
+                </div>
+            </div>
+        </div>
     }
 
     <div class="row g-4">
@@ -115,6 +145,13 @@ else
     private bool carregado;
     private string? erro;
 
+    // Formulário do analista
+    private string nomeAnalista = "";
+    private string observacao = "";
+    private string? erroDecisao;
+    private string? mensagemSucesso;
+    private bool aDecidir;
+
     // OnParametersSetAsync (e não OnInitializedAsync) para voltar a carregar se o número no URL mudar
     protected override async Task OnParametersSetAsync()
     {
@@ -129,6 +166,49 @@ else
             erro = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
         }
         carregado = true;
+    }
+
+    private async Task DecidirAsync(bool aprovar)
+    {
+        erroDecisao = null;
+
+        // Validação aqui para uma resposta imediata; a API volta a validar, porque é ela que manda
+        if (string.IsNullOrWhiteSpace(nomeAnalista) || string.IsNullOrWhiteSpace(observacao))
+        {
+            erroDecisao = "Indique o nome do analista e a observação.";
+            return;
+        }
+
+        aDecidir = true;
+        try
+        {
+            var erroApi = await Api.DecidirAsync(Numero, new DecisaoAnalista(aprovar, nomeAnalista, observacao));
+            if (erroApi is not null)
+            {
+                erroDecisao = erroApi;
+                return;
+            }
+
+            // Correu bem: volta a ler o pedido, para mostrar o estado novo e a linha nova do histórico
+            detalhe = await Api.ObterAsync(Numero);
+            if (aprovar)
+            {
+                mensagemSucesso = "Pedido aprovado.";
+            }
+            else
+            {
+                mensagemSucesso = "Pedido recusado.";
+            }
+            observacao = "";
+        }
+        catch (HttpRequestException)
+        {
+            erroDecisao = "Não foi possível contactar a API. Confirme que a app foi arrancada pelo AppHost.";
+        }
+        finally
+        {
+            aDecidir = false;
+        }
     }
 
     private static string TextoSituacao(SituacaoProfissional? situacao)

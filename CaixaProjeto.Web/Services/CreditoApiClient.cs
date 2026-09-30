@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CaixaProjeto.Core.Contratos;
 using CaixaProjeto.Core.Dominio;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CaixaProjeto.Web.Services;
 
@@ -52,5 +53,26 @@ public class CreditoApiClient(HttpClient httpClient)
         }
         resposta.EnsureSuccessStatusCode();
         return await resposta.Content.ReadFromJsonAsync<PedidoDetalhe>(Json, cancellationToken);
+    }
+
+    /// <summary>
+    /// Envia a decisão do analista. Devolve null se correu bem,
+    /// ou a mensagem de erro que a API explicou (campo "detail" da resposta).
+    /// </summary>
+    public async Task<string?> DecidirAsync(string numero, DecisaoAnalista decisao, CancellationToken cancellationToken = default)
+    {
+        var resposta = await httpClient.PostAsJsonAsync($"/api/pedidos/{Uri.EscapeDataString(numero)}/decisao", decisao, Json, cancellationToken);
+        if (resposta.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        // Os erros da API vêm no formato "Problem Details": { "status": 409, "detail": "..." }
+        var problema = await resposta.Content.ReadFromJsonAsync<ProblemDetails>(Json, cancellationToken);
+        if (problema?.Detail is not null)
+        {
+            return problema.Detail;
+        }
+        return $"A API respondeu com o erro {(int)resposta.StatusCode}.";
     }
 }

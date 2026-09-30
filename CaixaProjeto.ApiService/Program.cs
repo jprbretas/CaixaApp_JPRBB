@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using CaixaProjeto.ApiService.Data;
 using CaixaProjeto.ApiService.Services;
 using CaixaProjeto.Core;
+using CaixaProjeto.Core.Contratos;
 using CaixaProjeto.Core.Dominio;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,6 +78,29 @@ app.MapGet("/api/pedidos/{numero}", async (string numero, PedidoService servico,
         return Results.Ok(detalhe);
     })
     .WithName("ObterPedido");
+
+// Decisão do analista sobre um pedido em análise manual (aprovar ou recusar).
+// Responde com o detalhe atualizado, ou com um erro que explica porque não foi possível.
+app.MapPost("/api/pedidos/{numero}/decisao", async (string numero, DecisaoAnalista decisao, PedidoService servico, CancellationToken ct) =>
+    {
+        var resultado = await servico.DecidirAsync(numero, decisao, ct);
+
+        if (resultado == ResultadoDecisao.DadosEmFalta)
+        {
+            return Results.Problem(statusCode: 400, detail: "Indique o nome do analista e a observação.");
+        }
+        if (resultado == ResultadoDecisao.NaoEncontrado)
+        {
+            return Results.Problem(statusCode: 404, detail: $"O pedido {numero} não existe.");
+        }
+        if (resultado == ResultadoDecisao.NaoAguardaAnalista)
+        {
+            return Results.Problem(statusCode: 409, detail: "Este pedido não está em análise manual, por isso já não pode ser decidido.");
+        }
+
+        return Results.Ok(await servico.ObterAsync(numero, ct));
+    })
+    .WithName("DecidirPedido");
 
 app.MapDefaultEndpoints();
 

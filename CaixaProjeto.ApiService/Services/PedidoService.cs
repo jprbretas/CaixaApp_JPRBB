@@ -167,6 +167,58 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
         return new PedidoDetalhe(pedido.Numero, pedido.DataSubmissao, dados, resultado, pedido.EstadoAtual, historico);
     }
 
+    /// <summary>
+    /// Decisão de um analista sobre um pedido em ANÁLISE MANUAL: passa a APROVADO ou RECUSADO.
+    /// A DecisaoAutomatica fica como estava (é a do motor); muda só o EstadoAtual,
+    /// e a mudança fica registada no histórico com o nome do analista e a observação.
+    /// </summary>
+    public async Task<ResultadoDecisao> DecidirAsync(string numero, DecisaoAnalista decisao, CancellationToken ct = default)
+    {
+        // O nome e a observação são obrigatórios: é o que justifica a decisão numa auditoria
+        if (string.IsNullOrWhiteSpace(decisao.Utilizador) || string.IsNullOrWhiteSpace(decisao.Observacao))
+        {
+            return ResultadoDecisao.DadosEmFalta;
+        }
+
+        // Sem AsNoTracking: desta vez vamos alterar o pedido, e o EF tem de dar pela alteração
+        var pedido = await db.Pedidos.FirstOrDefaultAsync(p => p.Numero == numero, ct);
+        if (pedido is null)
+        {
+            return ResultadoDecisao.NaoEncontrado;
+        }
+
+        // Só os pedidos em análise manual esperam por um analista
+        if (pedido.EstadoAtual != Decisao.AnaliseManual)
+        {
+            return ResultadoDecisao.NaoAguardaAnalista;
+        }
+
+        Decisao novoEstado;
+        if (decisao.Aprovar)
+        {
+            novoEstado = Decisao.Aprovado;
+        }
+        else
+        {
+            novoEstado = Decisao.Recusado;
+        }
+
+        db.HistoricoEstados.Add(new HistoricoEstado
+        {
+            PedidoId = pedido.Id,
+            EstadoAnterior = pedido.EstadoAtual,
+            EstadoNovo = novoEstado,
+            Data = relogio.GetUtcNow().UtcDateTime,
+            Utilizador = decisao.Utilizador.Trim(),
+            Observacao = decisao.Observacao.Trim()
+        });
+        pedido.EstadoAtual = novoEstado;
+
+        // Grava as duas coisas (novo estado e linha do histórico) na mesma transação
+        await db.SaveChangesAsync(ct);
+        return ResultadoDecisao.Decidido;
+    }
+
     /// <summary>Número legível: ano + sequência de 4 dígitos (20260001, 20260002, ...).</summary>
     private async Task<string> ProximoNumeroAsync(int ano, CancellationToken ct)
     {

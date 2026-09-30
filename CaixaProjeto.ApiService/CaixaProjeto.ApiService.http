@@ -33,3 +33,15 @@ GET {{ApiService_HostAddress}}/api/pedidos/20260001
 Accept: application/json
 
 ###
+
+# Decisão do analista sobre um pedido em análise manual (troque pelo número de um pedido nesse estado)
+POST {{ApiService_HostAddress}}/api/pedidos/20260001/decisao
+Content-Type: application/json
+
+{
+  "aprovar": true,
+  "utilizador": "Ana Silva",
+  "observacao": "Contrato a prazo renovado há 3 anos; rendimento estável."
+}
+
+###
