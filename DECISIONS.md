@@ -15,6 +15,7 @@ ficheiro está em [docs/Estrutura.md](docs/Estrutura.md).
 [API](#api) ·
 [Interface](#interface) ·
 [Decisão do analista](#decisão-do-analista) ·
+[Consultas da Tarefa 4](#consultas-da-tarefa-4) ·
 [Estilo do código](#estilo-do-código) ·
 [Como foi desenvolvido](#como-foi-desenvolvido) ·
 [Limitações conhecidas](#limitações-conhecidas)
@@ -267,6 +268,33 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 
 ---
 
+## Consultas da Tarefa 4
+
+As cinco consultas estão em [sql/Tarefa4_Consultas.sql](sql/Tarefa4_Consultas.sql), escritas para
+SQLite e comentadas uma a uma.
+
+- **"Terminado com o estado X" é o estado atual do pedido** (`EstadoAtual`), e não a decisão do
+  motor. Um pedido que o motor mandou para análise manual e o analista aprovou conta como aprovado.
+- **Os pedidos ainda em análise manual aparecem na consulta 2** como estado próprio: são os que
+  esperam pelo analista.
+- **A consulta 2 mostra sempre os três estados**, mesmo os que têm 0 pedidos. Um `GROUP BY` sozinho
+  esconderia os estados sem pedidos, e "0 inválidos" também é uma resposta.
+- **Motivo de recusa mais frequente (consulta 3):** contam só os motivos que pediram a recusa, e
+  não os outros motivos dos mesmos pedidos. **Em caso de empate, aparecem todos os motivos
+  empatados**, em vez de um escolhido ao acaso. Os pedidos recusados por um analista não têm motivo
+  automático de recusa; a justificação deles está na observação do histórico.
+- **"Último mês" (consulta 4)** é desde o mesmo dia do mês anterior até agora, em UTC como as datas
+  gravadas. Só entram pedidos com NIF válido, porque só esses estão ligados a um cliente. As
+  simulações não entram, porque não são gravadas (ver [Limitações](#limitações-conhecidas)).
+- **Análise manual para aprovado (consulta 5)** lê o histórico de estados, que é o registo de
+  auditoria. O ficheiro inclui também a versão que só usa a tabela `Pedidos`, que hoje dá o mesmo
+  resultado porque um pedido só pode ser decidido uma vez.
+- **Testadas com dados preparados para cada caso:** pedidos aprovados pelo motor e pelo analista,
+  recusas por regras diferentes, um empate de motivos e pedidos com datas antigas (que a consulta 4
+  tem de deixar de fora).
+
+---
+
 ## Estilo do código
 
 - **As regras estão escritas na forma longa (if / else)**, de propósito, para serem fáceis de ler
@@ -295,6 +323,8 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | 5 | Página com a lista de pedidos, paginada e com filtro por estado. |
 | 6 | Detalhe do pedido: dados, análise e histórico. |
 | 7 | Decisão do analista sobre os pedidos em análise manual. |
+| 8 | Este documento (DECISIONS.md). |
+| 9 | Consultas SQL da Tarefa 4. |
 
 ---
 
@@ -311,4 +341,4 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 - **SQLite:** chega bem para uma aplicação local, mas não foi pensado para muitos utilizadores a
   gravar ao mesmo tempo.
 - **Só o motor tem testes automáticos.** A API e a gravação na base de dados foram testadas à mão.
-- **Por fazer:** as consultas SQL da Tarefa 4 e as respostas escritas das Tarefas 5 e 6.
+- **Por fazer:** as respostas escritas das Tarefas 5 e 6.

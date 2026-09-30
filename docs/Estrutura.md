@@ -71,6 +71,12 @@ HistoricoEstados (Id, PedidoId → Pedidos, EstadoAnterior, EstadoNovo, Data, Ut
 - Cada mudança de estado fica em `HistoricoEstados`. É daí que sai "quantos pedidos passaram de ANÁLISE MANUAL a APROVADO".
 - Os pedidos inválidos também são gravados, para auditoria e reporting.
 
+## sql
+
+| Ficheiro | Para que serve |
+|---|---|
+| `Tarefa4_Consultas.sql` | As cinco consultas da Tarefa 4 do enunciado, em SQL para SQLite, comentadas. Correm sobre a `caixa.db` num programa como o DB Browser for SQLite (abrir a base de dados, separador "Execute SQL"). |
+
 ## CaixaProjeto.Web
 
 | Ficheiro | Para que serve |
