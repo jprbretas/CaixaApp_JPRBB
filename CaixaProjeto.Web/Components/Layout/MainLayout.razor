@@ -1,20 +1,41 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <span class="text-muted">Pré-análise de crédito pessoal</span>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+@* Aviso no topo: deixa claro que é uma aplicação de demonstração, e não o site de um banco *@
+<div class="aviso-demo">
+    <div class="container">Aplicação de demonstração do exercício PND2026. Não pertence a nenhuma instituição bancária.</div>
 </div>
+
+<header class="cabecalho">
+    <NavMenu />
+</header>
+
+<main class="conteudo">
+    <div class="container">
+        @Body
+    </div>
+</main>
+
+<footer class="rodape">
+    <div class="container">
+        <div class="row g-4 align-items-start">
+            <div class="col-md-6">
+                <a class="marca-link" href=""><Marca /></a>
+                <p class="mt-3 mb-0">
+                    Pré-análise automática de pedidos de crédito pessoal: decisão, motivos e indicadores,
+                    segundo as regras de negócio do exercício PND2026.
+                </p>
+            </div>
+            <div class="col-md-6">
+                <nav class="rodape-links justify-content-md-end">
+                    <a href="">Início</a>
+                    <a href="pedidos/novo">Novo pedido</a>
+                    <a href="pedidos">Pedidos</a>
+                </nav>
+            </div>
+        </div>
+        <p class="rodape-nota">Aplicação de demonstração. Os dados introduzidos servem apenas para testes.</p>
+    </div>
+</footer>
 
 <div id="blazor-error-ui">
     Ocorreu um erro inesperado.

@@ -26,10 +26,9 @@ else if (detalhe is null)
 }
 else
 {
-    <div class="d-flex align-items-center gap-3 mb-3">
-        <h1 class="mb-0">Pedido @detalhe.Numero</h1>
+    <CabecalhoPagina Eyebrow="Pedido de crédito" Titulo="@($"Pedido {detalhe.Numero}")">
         <span class="badge fs-6 text-bg-@Formatos.CorDecisao(detalhe.EstadoAtual)">@detalhe.EstadoAtual.Texto()</span>
-    </div>
+    </CabecalhoPagina>
 
     @if (mensagemSucesso is not null)
     {
@@ -100,8 +99,8 @@ else
         </div>
     </div>
 
-    <h4 class="mt-4">Histórico de estados</h4>
-    <div class="table-responsive">
+    <h2 class="h4 mt-5 mb-3">Histórico de estados</h2>
+    <div class="table-responsive cartao-tabela">
         <table class="table align-middle text-nowrap">
             <thead>
                 <tr>

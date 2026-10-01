@@ -1,31 +1,17 @@
-﻿<script type="module" src="@Assets["Components/Layout/NavMenu.razor.js"]"></script>
+<script type="module" src="@Assets["Components/Layout/NavMenu.razor.js"]"></script>
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Caixa · Crédito</a>
-    </div>
-</div>
+<div class="container barra">
+    <a class="marca-link" href="">
+        <Marca />
+    </a>
 
-<input type="checkbox" title="Menu de navegação" class="navbar-toggler" />
+    @* No telemóvel, esta caixa escondida abre e fecha o menu; o botão é o "label" dela *@
+    <input type="checkbox" id="menu-alternar" class="menu-alternar" />
+    <label for="menu-alternar" class="menu-botao" title="Menu" aria-label="Abrir ou fechar o menu"><span></span></label>
 
-<div id="nav-scrollable" class="nav-scrollable">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Início
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="pedidos/novo">
-                <span class="bi bi-plus-square-fill" aria-hidden="true"></span> Novo pedido
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="pedidos" Match="NavLinkMatch.All">
-                <span class="bi bi-list-nested" aria-hidden="true"></span> Pedidos
-            </NavLink>
-        </div>
+    <nav class="menu" id="menu-principal">
+        <NavLink class="menu-item" href="" Match="NavLinkMatch.All">Início</NavLink>
+        <NavLink class="menu-item" href="pedidos" Match="NavLinkMatch.All">Pedidos</NavLink>
+        <NavLink class="btn btn-primary menu-acao" href="pedidos/novo">Novo pedido</NavLink>
     </nav>
 </div>

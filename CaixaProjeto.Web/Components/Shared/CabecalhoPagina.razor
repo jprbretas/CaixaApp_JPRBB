@@ -1,0 +1,28 @@
+@* Cabeçalho de cada página: a linha pequena em azul (Eyebrow), o título, uma descrição opcional
+   e, à direita, ações opcionais (por exemplo, um botão). *@
+<div class="cabecalho-pagina">
+    <div>
+        @if (Eyebrow is not null)
+        {
+            <p class="eyebrow">@Eyebrow</p>
+        }
+        <h1>@Titulo</h1>
+        @if (Descricao is not null)
+        {
+            <p class="cabecalho-pagina-descricao">@Descricao</p>
+        }
+    </div>
+    @if (ChildContent is not null)
+    {
+        <div class="cabecalho-pagina-acoes">@ChildContent</div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter, EditorRequired] public string Titulo { get; set; } = "";
+    [Parameter] public string? Descricao { get; set; }
+
+    // O que se escreve entre <CabecalhoPagina> e </CabecalhoPagina> aparece à direita do título
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

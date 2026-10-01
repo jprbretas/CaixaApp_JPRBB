@@ -7,7 +7,8 @@
 
 <PageTitle>Pedidos</PageTitle>
 
-<h1>Pedidos de crédito</h1>
+<CabecalhoPagina Eyebrow="Consulta" Titulo="Pedidos de crédito"
+                 Descricao="Todos os pedidos submetidos, do mais recente para o mais antigo. O número abre o detalhe." />
 
 <div class="d-flex align-items-center gap-2 mb-3">
     <label class="text-muted" for="filtro-estado">Estado:</label>
@@ -18,7 +19,6 @@
             <option value="@decisao">@decisao.Texto()</option>
         }
     </select>
-    <a class="btn btn-primary ms-auto" href="pedidos/novo">Novo pedido</a>
 </div>
 
 @if (erro is not null)
@@ -31,11 +31,11 @@ else if (pagina is null)
 }
 else if (pagina.Total == 0)
 {
-    <div class="text-muted border rounded p-4">Ainda não há pedidos gravados com este estado.</div>
+    <div class="painel-vazio">Ainda não há pedidos gravados com este estado.</div>
 }
 else
 {
-    <div class="table-responsive">
+    <div class="table-responsive cartao-tabela mb-3">
         <table class="table table-hover align-middle text-nowrap">
             <thead>
                 <tr>

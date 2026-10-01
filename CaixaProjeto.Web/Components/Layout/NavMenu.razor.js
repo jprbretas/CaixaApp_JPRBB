@@ -1,8 +1,11 @@
-const navScrollable = document.getElementById("nav-scrollable");
-const navToggler = document.querySelector(".navbar-toggler");
+// No telemóvel: depois de escolher uma página no menu, fecha o menu
+const alternar = document.getElementById("menu-alternar");
+const menu = document.getElementById("menu-principal");
 
-if (navScrollable && navToggler) {
-    navScrollable.addEventListener("click", function() {
-        navToggler.click();
+if (alternar && menu) {
+    menu.addEventListener("click", function (evento) {
+        if (evento.target.closest("a")) {
+            alternar.checked = false;
+        }
     });
 }

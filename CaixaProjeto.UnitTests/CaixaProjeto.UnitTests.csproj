@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CaixaProjeto.Core\CaixaProjeto.Core.csproj" />
+    <ProjectReference Include="..\CaixaProjeto.WebTests\CaixaProjeto.WebTests.csproj" />
   </ItemGroup>
 
 </Project>

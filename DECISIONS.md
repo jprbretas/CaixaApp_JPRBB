@@ -16,6 +16,7 @@ resposta a cada tarefa do enunciado.
 [Migrações](#migrações) ·
 [API](#api) ·
 [Interface](#interface) ·
+[Identidade visual](#identidade-visual) ·
 [Simulações](#simulações) ·
 [Decisão do analista](#decisão-do-analista) ·
 [Consultas da Tarefa 4](#consultas-da-tarefa-4) ·
@@ -55,7 +56,8 @@ preferência por .NET C#.
   com os logs de cada serviço.
 - **SQLite** com **Entity Framework Core**: a base de dados é um ficheiro (`caixa.db`), não
   precisa de instalação e é criada sozinha no primeiro arranque.
-- **xUnit** para os testes e **Bootstrap** (que vem com o modelo do Blazor) para o aspeto.
+- **xUnit** para os testes e **Bootstrap** (que vem com o modelo do Blazor) como base do aspeto,
+  com uma identidade visual própria por cima (ver [Identidade visual](#identidade-visual)).
 
 ---
 
@@ -368,6 +370,40 @@ isso, desde o passo 10, cada clique em **Analisar** fica registado.
 
 ---
 
+## Identidade visual
+
+No passo 16 troquei o aspeto do modelo do Blazor (barra lateral roxa, letra Helvetica) por um
+**inspirado nos sites de banca portugueses**, como o da CGD, a quem o exercício se destina: é uma
+forma de mostrar a aplicação num contexto que os avaliadores reconhecem.
+
+**O que segui do estilo desses sites:** cabeçalho branco fixo no topo com o menu na horizontal; azul
+como cor principal e títulos grandes em azul-escuro, com uma linha pequena em azul por cima; botões
+em forma de pílula; cartões com cantos bem redondos; muito espaço em branco; a letra Inter; e uma
+página inicial com um destaque grande e secções "Como funciona" e "O que cada resultado quer dizer".
+
+**O que não usei, de propósito:** o logótipo, o nome ou os produtos de nenhum banco, nem imagens ou
+textos copiados. As cores são tons de azul próprios, e não os de uma marca. O símbolo (um gráfico a
+subir) e o nome ("Crédito Pessoal · Pré-análise") foram feitos para a aplicação. O cabeçalho tem uma
+barra fina a dizer que é **uma aplicação de demonstração que não pertence a nenhuma instituição
+bancária**, para ninguém a confundir com o site de um banco. A barra antiga dizia "Caixa · Crédito",
+que troquei pela mesma razão: "Caixa" é como muita gente se refere à CGD.
+
+**Como está feito:**
+
+- **As cores e as formas estão num só sítio**, como variáveis CSS no início do `wwwroot/app.css`
+  (`--cor-azul`, `--cor-marinho`, `--raio`...). O Bootstrap passa a usá-las, por isso os botões, as
+  ligações e os destaques mudam todos juntos se uma cor mudar.
+- **Dois componentes novos, reutilizados:** `Marca` (o símbolo e o nome, no cabeçalho e no rodapé) e
+  `CabecalhoPagina` (a linha em azul, o título e a descrição de cada página).
+- **O menu adapta-se ao telemóvel** sem JavaScript: abaixo de 768 px esconde-se atrás de um botão,
+  que é uma caixa de seleção escondida. Um script de poucas linhas só fecha o menu depois de se
+  escolher uma página.
+- **As páginas não mudaram de comportamento**: só o aspeto. Os 92 testes continuam a passar.
+
+Verificado no browser em computador e em telemóvel (375 px de largura, sem deslocamento para o lado).
+
+---
+
 ## Decisão do analista
 
 - **Só os pedidos em ANÁLISE MANUAL podem ser decididos**, e passam a APROVADO ou RECUSADO. Um
@@ -501,6 +537,7 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | 13 | Resposta completa à Tarefa 1, com as user stories, e o README com o índice das respostas. |
 | 14 | Melhorias que nasceram da Tarefa 6: NIF com espaços e mensagens de erro distintas, com código para o suporte. |
 | 15 | Migrações do Entity Framework: mudanças no modelo sem apagar a base de dados. |
+| 16 | Identidade visual inspirada nos sites de banca, com símbolo, nome e cores próprios. |
 
 ---
 

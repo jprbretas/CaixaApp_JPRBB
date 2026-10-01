@@ -120,15 +120,19 @@ Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, Rendim
 | `Services/CreditoApiClient.cs` | Faz os pedidos HTTP à API: simular (`PreAnalisarAsync`), gravar (`SubmeterAsync`), listar (`ListarAsync`), ler um pedido (`ObterAsync`, devolve null se a API responder 404) e enviar a decisão do analista (`DecidirAsync`, devolve null ou a mensagem de erro da API). Quando a API responde com um erro, lança `ErroDaApiException`. |
 | `Services/ErroDaApiException.cs` | A exceção para "a API respondeu com um erro" (com o código `traceId` para o suporte) e o `MensagensErro`, que escolhe a frase que as páginas mostram em cada caso. |
 | `Models/PedidoForm.cs` | Modelo do formulário (com `set`, porque o Blazor precisa) e os cenários A a D para preencher num clique. |
-| `Components/App.razor` | A página HTML "mãe": carrega o Bootstrap, o CSS e o script do Blazor. |
+| `Components/App.razor` | A página HTML "mãe": carrega a letra Inter (Google Fonts), o Bootstrap, o CSS, o ícone e o script do Blazor. |
 | `Components/Routes.razor` | Diz ao Blazor para encontrar as páginas pelo `@page` e usar o `MainLayout`. |
 | `Components/_Imports.razor` | `@using` partilhados por todos os componentes. |
-| `Components/Layout/MainLayout.razor` | Moldura de todas as páginas: menu à esquerda, barra em cima, conteúdo no meio. |
-| `Components/Layout/NavMenu.razor` | O menu lateral. |
-| `Components/Pages/Home.razor` | Página inicial (`/`). |
+| `Components/Layout/MainLayout.razor` | Moldura de todas as páginas: o aviso de aplicação de demonstração, o cabeçalho com o menu, o conteúdo e o rodapé. |
+| `Components/Layout/NavMenu.razor` | O cabeçalho: a marca e o menu na horizontal. No telemóvel, o menu esconde-se atrás de um botão (`NavMenu.razor.js` fecha-o depois de escolher uma página). |
+| `Components/Pages/Home.razor` | Página inicial (`/`): o destaque com um exemplo de resultado, "Como funciona" e "O que cada resultado quer dizer". |
 | `Components/Pages/NovoPedido.razor` | Formulário do pedido e resultado (`/pedidos/novo`). "Analisar" simula (fica registada em `Simulacoes`, mas não cria pedido); "Submeter pedido" cria o pedido e mostra o número. É `InteractiveServer`: os cliques são tratados no servidor através de uma ligação em tempo real (SignalR). |
 | `Components/Pages/Pedidos.razor` | Lista dos pedidos gravados (`/pedidos`): tabela com 20 por página, botões Anterior/Seguinte e filtro por estado atual. O número de cada pedido abre o detalhe. |
 | `Components/Pages/DetalhePedido.razor` | Detalhe de um pedido (`/pedidos/{numero}`): dados, análise automática (com o `ResultadoView`), estado atual e histórico de estados. Nos pedidos em ANÁLISE MANUAL mostra o formulário do analista (nome, observação, Aprovar/Recusar), por isso usa `InteractiveServer`. |
 | `Components/Shared/ResultadoView.razor` | Cartão reutilizável com decisão, motivos e indicadores. |
+| `Components/Shared/Marca.razor` | O símbolo da aplicação (desenhado em SVG) e o nome, usados no cabeçalho e no rodapé. |
+| `Components/Shared/CabecalhoPagina.razor` | O cabeçalho de cada página: a linha pequena em azul, o título, uma descrição e ações opcionais à direita. |
 | `Components/Shared/Formatos.cs` | Formatação "1.234,56 €", percentagens, datas (de UTC para a hora local) e a cor de cada decisão. |
-| `wwwroot/` | Ficheiros estáticos: `app.css`, Bootstrap e favicon. |
+| `wwwroot/app.css` | A identidade visual: as cores e as formas como variáveis CSS no início (`--cor-azul`, `--raio`...), e os estilos do cabeçalho, do menu, dos cartões, das tabelas e da página inicial. |
+| `wwwroot/favicon.svg` | O ícone do separador do browser (o mesmo símbolo da marca). |
+| `wwwroot/lib/` | O Bootstrap. |

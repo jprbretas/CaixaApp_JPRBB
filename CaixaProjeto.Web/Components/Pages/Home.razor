@@ -2,8 +2,106 @@
 
 <PageTitle>Início</PageTitle>
 
-<h1>Pré-análise de Crédito Pessoal</h1>
+<section class="destaque">
+    <div>
+        <p class="eyebrow">Crédito pessoal</p>
+        <h1>Saiba em segundos se o seu pedido de crédito avança</h1>
+        <p class="destaque-lead">
+            Preencha os dados do pedido e veja logo a decisão, os motivos e os indicadores:
+            a prestação, a taxa de esforço e o montante máximo recomendado.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-light btn-lg" href="pedidos/novo">Fazer um pedido</a>
+            <a class="btn btn-outline-light btn-lg" href="pedidos">Ver os pedidos</a>
+        </div>
+    </div>
 
-<p>Avalia pedidos de crédito pessoal segundo as regras de negócio das áreas comercial e de risco.</p>
+    @* Um exemplo de resultado (cenário A do enunciado), só para ilustrar *@
+    <div class="destaque-exemplo" aria-hidden="true">
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">Exemplo de resultado</small>
+            <span class="badge text-bg-success">APROVADO</span>
+        </div>
+        <dl>
+            <dt>Valor pretendido</dt>
+            <dd>10.000,00 €</dd>
+            <dt>Prestação estimada</dt>
+            <dd>166,67 €</dd>
+            <dt>Taxa de esforço</dt>
+            <dd>14,67%</dd>
+        </dl>
+    </div>
+</section>
 
-<a class="btn btn-primary" href="pedidos/novo">Fazer um novo pedido</a>
+<section class="secao">
+    <p class="eyebrow">Como funciona</p>
+    <h2>Três passos, com regras claras</h2>
+    <div class="row g-4 mt-1">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <span class="passo-numero">1</span>
+                    <h3 class="h5">Preencha o pedido</h3>
+                    <p class="mb-0">NIF, idade, rendimento, prestações atuais, valor, prazo, situação profissional e incidentes de crédito.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <span class="passo-numero">2</span>
+                    <h3 class="h5">Veja a decisão e porquê</h3>
+                    <p class="mb-0">As oito regras de negócio são aplicadas e fica a decisão mais restritiva, com todos os motivos.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <span class="passo-numero">3</span>
+                    <h3 class="h5">Um analista decide o resto</h3>
+                    <p class="mb-0">Os pedidos em análise manual são aprovados ou recusados por um analista, com uma justificação.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="secao">
+    <p class="eyebrow">As decisões</p>
+    <h2>O que cada resultado quer dizer</h2>
+    <div class="row g-4 mt-1">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <span class="badge text-bg-success mb-3">APROVADO</span>
+                    <p class="mb-0">Nenhuma regra levantou objeções.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <span class="badge text-bg-warning mb-3">ANÁLISE MANUAL</span>
+                    <p class="mb-0">O pedido precisa de ser visto por um analista, por exemplo com contrato a prazo ou taxa de esforço entre 35% e 50%.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <span class="badge text-bg-danger mb-3">RECUSADO</span>
+                    <p class="mb-0">Há incidentes de crédito, o cliente está desempregado ou a taxa de esforço passa os 50%.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <span class="badge text-bg-secondary mb-3">PEDIDO INVÁLIDO</span>
+                    <p class="mb-0">Faltam dados ou não fazem sentido. Mostram-se todos os erros de uma vez, para corrigir tudo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

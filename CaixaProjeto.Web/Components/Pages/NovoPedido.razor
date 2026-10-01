@@ -7,7 +7,8 @@
 
 <PageTitle>Novo pedido</PageTitle>
 
-<h1>Novo pedido de crédito</h1>
+<CabecalhoPagina Eyebrow="Pré-análise" Titulo="Novo pedido de crédito"
+                 Descricao="Preencha os dados do cliente, ou escolha um dos cenários do enunciado para ver um exemplo." />
 
 <div class="mb-3">
     <span class="me-2 text-muted">Preencher com o cenário:</span>
@@ -19,58 +20,62 @@
 
 <div class="row g-4">
     <div class="col-lg-6">
-        <EditForm Model="form" OnSubmit="AnalisarAsync" FormName="novo-pedido">
-            <div class="row g-3">
-                <div class="col-sm-6">
-                    <label class="form-label">NIF</label>
-                    <InputText class="form-control" @bind-Value="form.Nif" maxlength="15" placeholder="123 456 789" />
-                </div>
-                <div class="col-sm-6">
-                    <label class="form-label">Idade</label>
-                    <InputNumber class="form-control" @bind-Value="form.Idade" />
-                </div>
-                <div class="col-sm-6">
-                    <label class="form-label">Rendimento mensal líquido (€)</label>
-                    <InputNumber class="form-control" @bind-Value="form.RendimentoMensalLiquido" />
-                </div>
-                <div class="col-sm-6">
-                    <label class="form-label">Prestações atuais (€)</label>
-                    <InputNumber class="form-control" @bind-Value="form.PrestacoesAtuais" />
-                </div>
-                <div class="col-sm-6">
-                    <label class="form-label">Valor pretendido (€)</label>
-                    <InputNumber class="form-control" @bind-Value="form.ValorPretendido" />
-                </div>
-                <div class="col-sm-6">
-                    <label class="form-label">Prazo (meses)</label>
-                    <InputNumber class="form-control" @bind-Value="form.PrazoMeses" />
-                </div>
-                <div class="col-sm-6">
-                    <label class="form-label">Situação profissional</label>
-                    <InputSelect class="form-select" @bind-Value="form.SituacaoProfissional">
-                        <option value="">(escolher)</option>
-                        @foreach (var situacao in Enum.GetValues<SituacaoProfissional>())
-                        {
-                            <option value="@situacao">@situacao.Texto()</option>
-                        }
-                    </InputSelect>
-                </div>
-                <div class="col-sm-6">
-                    <label class="form-label">Incidentes de crédito</label>
-                    <InputSelect class="form-select" @bind-Value="form.IncidentesCredito">
-                        <option value="false">Não</option>
-                        <option value="true">Sim</option>
-                    </InputSelect>
-                </div>
-            </div>
+        <div class="card">
+            <div class="card-body p-4">
+                <EditForm Model="form" OnSubmit="AnalisarAsync" FormName="novo-pedido">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label">NIF</label>
+                            <InputText class="form-control" @bind-Value="form.Nif" maxlength="15" placeholder="123 456 789" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Idade</label>
+                            <InputNumber class="form-control" @bind-Value="form.Idade" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Rendimento mensal líquido (€)</label>
+                            <InputNumber class="form-control" @bind-Value="form.RendimentoMensalLiquido" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Prestações atuais (€)</label>
+                            <InputNumber class="form-control" @bind-Value="form.PrestacoesAtuais" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Valor pretendido (€)</label>
+                            <InputNumber class="form-control" @bind-Value="form.ValorPretendido" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Prazo (meses)</label>
+                            <InputNumber class="form-control" @bind-Value="form.PrazoMeses" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Situação profissional</label>
+                            <InputSelect class="form-select" @bind-Value="form.SituacaoProfissional">
+                                <option value="">(escolher)</option>
+                                @foreach (var situacao in Enum.GetValues<SituacaoProfissional>())
+                                {
+                                    <option value="@situacao">@situacao.Texto()</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Incidentes de crédito</label>
+                            <InputSelect class="form-select" @bind-Value="form.IncidentesCredito">
+                                <option value="false">Não</option>
+                                <option value="true">Sim</option>
+                            </InputSelect>
+                        </div>
+                    </div>
 
-            <div class="mt-4">
-                @* "Analisar" simula (fica registada como simulação); "Submeter pedido" cria o pedido *@
-                <button type="submit" class="btn btn-outline-primary" disabled="@aTrabalhar">Analisar</button>
-                <button type="button" class="btn btn-primary" disabled="@aTrabalhar" @onclick="SubmeterAsync">Submeter pedido</button>
-                <button type="button" class="btn btn-link" @onclick="Limpar">Limpar</button>
+                    <div class="mt-4">
+                        @* "Analisar" simula (fica registada como simulação); "Submeter pedido" cria o pedido *@
+                        <button type="submit" class="btn btn-outline-primary" disabled="@aTrabalhar">Analisar</button>
+                        <button type="button" class="btn btn-primary" disabled="@aTrabalhar" @onclick="SubmeterAsync">Submeter pedido</button>
+                        <button type="button" class="btn btn-link" @onclick="Limpar">Limpar</button>
+                    </div>
+                </EditForm>
             </div>
-        </EditForm>
+        </div>
     </div>
 
     <div class="col-lg-6">
@@ -92,7 +97,7 @@
         }
         else
         {
-            <div class="text-muted border rounded p-4">
+            <div class="painel-vazio">
                 Preencha o pedido (ou escolha um cenário) e carregue em <strong>Analisar</strong> para simular,
                 ou em <strong>Submeter pedido</strong> para gravar.
             </div>
