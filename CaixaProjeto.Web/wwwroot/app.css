@@ -1,12 +1,6 @@
-/* =====================================================================================
-   Identidade visual da aplicação
-   Inspirada no estilo dos sites de banca (cabeçalho branco, azul como cor principal,
-   títulos em azul-escuro, cantos arredondados, muito espaço em branco), com cores,
-   símbolo e nome próprios.
-   ===================================================================================== */
+/* Identidade visual: as cores e as formas estão nas variáveis do :root */
 
 :root {
-    /* Cores da aplicação */
     --cor-azul: #0d63b8;
     --cor-azul-escuro: #0a4f93;
     --cor-azul-claro: #e8f1fb;
@@ -16,7 +10,6 @@
     --cor-fundo: #f5f8fc;
     --cor-borda: #e1e8f0;
 
-    /* Formas */
     --raio: 16px;
     --raio-pequeno: 10px;
     --sombra: 0 1px 2px rgba(11, 37, 64, 0.06), 0 4px 16px rgba(11, 37, 64, 0.06);
@@ -60,7 +53,7 @@ h1:focus {
     outline: none;
 }
 
-/* A linha pequena em azul que aparece por cima dos títulos */
+/* Linha pequena em azul por cima dos títulos */
 .eyebrow {
     color: var(--cor-azul);
     font-size: 0.9rem;
@@ -137,7 +130,6 @@ h1:focus {
     font-weight: 600;
 }
 
-/* Tabela dentro de um cartão branco com cantos arredondados */
 .cartao-tabela {
     background: #ffffff;
     border: 1px solid var(--cor-borda);
@@ -190,7 +182,6 @@ h1:focus {
     border-radius: var(--raio-pequeno);
 }
 
-/* Espaço reservado quando ainda não há nada para mostrar */
 .painel-vazio {
     background: #ffffff;
     border: 1px dashed #cfd9e5;
@@ -289,7 +280,7 @@ h1:focus {
     margin-left: 0.5rem;
 }
 
-/* No telemóvel, o menu esconde-se atrás de um botão (sem JavaScript: uma caixa de seleção escondida) */
+/* No telemóvel, o menu abre e fecha com uma caixa de seleção escondida, sem JavaScript */
 .menu-alternar {
     display: none;
 }

@@ -1,6 +1,5 @@
 namespace CaixaProjeto.Core.Dominio;
 
-/// <summary>Situação profissional do cliente, tal como definida no enunciado.</summary>
 public enum SituacaoProfissional
 {
     Efetivo,
@@ -8,11 +7,7 @@ public enum SituacaoProfissional
     Desempregado
 }
 
-/// <summary>
-/// Decisões possíveis de uma pré-análise.
-/// O valor numérico é a severidade (Regra 8): quanto maior, mais restritiva.
-/// Assim, a decisão final é simplesmente o máximo das decisões das regras.
-/// </summary>
+/// <summary>O valor é a severidade (Regra 8): a decisão final é o máximo das decisões das regras.</summary>
 public enum Decisao
 {
     Aprovado = 0,

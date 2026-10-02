@@ -5,9 +5,6 @@
 @using CaixaProjeto.Web.Services
 @inject CreditoApiClient Api
 
-@* InteractiveServer: a página tem botões (Aprovar / Recusar), e os cliques são tratados
-   no servidor através de uma ligação em tempo real (SignalR). *@
-
 <PageTitle>Pedido @Numero</PageTitle>
 
 <a href="pedidos" class="d-inline-block mb-3">&larr; Voltar à lista</a>
@@ -137,21 +134,19 @@ else
 }
 
 @code {
-    // Vem do URL: /pedidos/20260001 -> Numero = "20260001"
     [Parameter] public string Numero { get; set; } = "";
 
     private PedidoDetalhe? detalhe;
     private bool carregado;
     private string? erro;
 
-    // Formulário do analista
     private string nomeAnalista = "";
     private string observacao = "";
     private string? erroDecisao;
     private string? mensagemSucesso;
     private bool aDecidir;
 
-    // OnParametersSetAsync (e não OnInitializedAsync) para voltar a carregar se o número no URL mudar
+    // OnParametersSetAsync, e não OnInitializedAsync: volta a carregar se o número no endereço mudar
     protected override async Task OnParametersSetAsync()
     {
         erro = null;
@@ -171,7 +166,7 @@ else
     {
         erroDecisao = null;
 
-        // Validação aqui para uma resposta imediata; a API volta a validar, porque é ela que manda
+        // Resposta imediata; a API volta a validar, porque é ela que tem a última palavra
         if (string.IsNullOrWhiteSpace(nomeAnalista) || string.IsNullOrWhiteSpace(observacao))
         {
             erroDecisao = "Indique o nome do analista e a observação.";
@@ -188,7 +183,6 @@ else
                 return;
             }
 
-            // Correu bem: volta a ler o pedido, para mostrar o estado novo e a linha nova do histórico
             detalhe = await Api.ObterAsync(Numero);
             if (aprovar)
             {

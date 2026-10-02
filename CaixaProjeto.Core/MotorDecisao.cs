@@ -3,12 +3,9 @@ using CaixaProjeto.Core.Regras;
 
 namespace CaixaProjeto.Core;
 
-/// <summary>
-/// Ponto de entrada da pré-análise: recebe um pedido e devolve decisão, motivos e indicadores.
-/// </summary>
 public sealed class MotorDecisao(ParametrosRegras parametros)
 {
-    // Regras 2 a 7, pela ordem do enunciado. Todas são avaliadas, para registar todos os motivos.
+    // Todas são avaliadas, mesmo depois de uma recusa, para o resultado ter todos os motivos
     private static readonly IReadOnlyList<IRegra> Regras =
     [
         new RegraIdadeFinal(),
@@ -23,24 +20,21 @@ public sealed class MotorDecisao(ParametrosRegras parametros)
 
     public ResultadoAnalise Analisar(PedidoCredito pedido)
     {
-        // 0. NIF sem espaços, pontos nem hífenes ("123 456 789" é um NIF válido)
         pedido = pedido.Normalizado();
 
-        // 1. Regra 1: se o pedido é inválido, pára aqui (os indicadores nem são calculáveis)
+        // Pedido inválido: pára aqui, os indicadores nem são calculáveis
         var erros = ValidacaoInicial.Validar(pedido, parametros);
         if (erros.Count > 0)
             return new ResultadoAnalise(Decisao.PedidoInvalido, erros, null);
 
-        // 2. Indicadores
         var indicadores = CalculoIndicadores.Calcular(pedido, parametros);
 
-        // 3. Regras 2 a 7
         var motivos = Regras
             .Select(regra => regra.Avaliar(pedido, indicadores, parametros))
             .OfType<Motivo>()
             .ToList();
 
-        // 4. Regra 8: fica a decisão mais restritiva; sem motivos, o pedido é aprovado
+        // Regra 8: fica a mais restritiva; sem motivos, aprovado
         var decisao = motivos.Count == 0 ? Decisao.Aprovado : motivos.Max(m => m.Decisao);
 
         return new ResultadoAnalise(decisao, motivos, indicadores);

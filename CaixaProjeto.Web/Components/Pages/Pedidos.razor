@@ -90,7 +90,6 @@ else
     private Decisao? estado;
     private string? erro;
 
-    // Corre quando a página abre: carrega a primeira página sem filtro
     protected override Task OnInitializedAsync()
     {
         return CarregarAsync(1);
@@ -107,7 +106,7 @@ else
         {
             estado = Enum.Parse<Decisao>(valor);
         }
-        // Ao mudar o filtro, volta sempre à primeira página
+        // Página 1: a página atual pode não existir com o novo filtro
         return CarregarAsync(1);
     }
 

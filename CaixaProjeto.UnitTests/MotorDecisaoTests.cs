@@ -4,9 +4,8 @@ using CaixaProjeto.Core.Dominio;
 namespace CaixaProjeto.UnitTests;
 
 /// <summary>
-/// Testes do motor de decisão, sem web nem BD: só o Core.
-/// Cada teste parte de um pedido "bom" (cenário A, aprovado) e muda apenas o que interessa,
-/// com "with", para ficar claro que é essa mudança que provoca o resultado.
+/// Cada teste parte do cenário A (aprovado) e muda só o que interessa, com "with", para ficar
+/// claro que é essa mudança que provoca o resultado.
 /// </summary>
 public class MotorDecisaoTests
 {

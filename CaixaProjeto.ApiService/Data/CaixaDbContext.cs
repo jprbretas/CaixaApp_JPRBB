@@ -2,10 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CaixaProjeto.ApiService.Data;
 
-/// <summary>
-/// A "porta" para a base de dados SQLite. Cada DbSet é uma tabela;
-/// o OnModelCreating afina nomes, índices e tipos.
-/// </summary>
 public class CaixaDbContext(DbContextOptions<CaixaDbContext> options) : DbContext(options)
 {
     public DbSet<Cliente> Clientes => Set<Cliente>();

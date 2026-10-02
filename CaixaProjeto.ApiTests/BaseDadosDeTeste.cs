@@ -7,10 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CaixaProjeto.ApiTests;
 
-/// <summary>
-/// Relógio que marca a hora que o teste quiser. O PedidoService recebe um TimeProvider,
-/// por isso os testes podem "viajar no tempo" (por exemplo, criar um pedido com 60 dias).
-/// </summary>
+/// <summary>Marca a hora que o teste quiser (por exemplo, para criar um pedido com 60 dias).</summary>
 public class RelogioDeTeste(DateTimeOffset agora) : TimeProvider
 {
     public DateTimeOffset Agora { get; set; } = agora;
@@ -19,10 +16,8 @@ public class RelogioDeTeste(DateTimeOffset agora) : TimeProvider
 }
 
 /// <summary>
-/// Uma base de dados SQLite em memória, criada pelas mesmas migrações que criam a caixa.db.
-/// Assim os testes confirmam também que as migrações dão uma base de dados que funciona.
-/// Só existe enquanto a ligação estiver aberta. O xUnit cria uma instância da classe de testes
-/// por cada teste, por isso cada teste tem a sua base de dados vazia e os testes não se misturam.
+/// SQLite em memória, criada pelas mesmas migrações da caixa.db. Existe enquanto a ligação estiver
+/// aberta; o xUnit cria uma por teste, por isso cada teste começa com a base de dados vazia.
 /// </summary>
 public sealed class BaseDadosDeTeste : IDisposable
 {
@@ -40,7 +35,6 @@ public sealed class BaseDadosDeTeste : IDisposable
         db.Database.Migrate();
     }
 
-    /// <summary>Um DbContext novo sobre a mesma base de dados.</summary>
     public CaixaDbContext NovoContexto()
     {
         var opcoes = new DbContextOptionsBuilder<CaixaDbContext>().UseSqlite(Conexao).Options;
@@ -48,9 +42,8 @@ public sealed class BaseDadosDeTeste : IDisposable
     }
 
     /// <summary>
-    /// Um PedidoService com um DbContext novo, como a API faz em cada pedido HTTP.
-    /// Para confirmar o que ficou gravado, os testes leem com outro DbContext (NovoContexto),
-    /// para verem o que está mesmo na base de dados e não o que o EF ainda tem em memória.
+    /// Com um DbContext novo, como a API em cada pedido HTTP. Os testes confirmam o que ficou gravado
+    /// com outro (NovoContexto), para não verem o que o EF ainda tem em memória.
     /// </summary>
     public PedidoService Servico()
     {
@@ -63,7 +56,7 @@ public sealed class BaseDadosDeTeste : IDisposable
     }
 }
 
-/// <summary>Pedidos de exemplo, a partir do cenário A do enunciado (aprovado).</summary>
+// A partir do cenário A do enunciado (aprovado)
 public static class Exemplos
 {
     public static readonly PedidoCredito Aprovado = new()
@@ -78,7 +71,7 @@ public static class Exemplos
         IncidentesCredito = false
     };
 
-    /// <summary>Cenário B do enunciado: contrato a prazo e taxa de esforço de 45,83% (regras 4 e 6).</summary>
+    // Cenário B: regras 4 e 6
     public static readonly PedidoCredito AnaliseManual = new()
     {
         Nif = "123456789",
@@ -91,9 +84,9 @@ public static class Exemplos
         IncidentesCredito = false
     };
 
-    /// <summary>Recusado pela Regra 3 (incidentes de crédito).</summary>
+    // Regra 3
     public static readonly PedidoCredito Recusado = Aprovado with { IncidentesCredito = true };
 
-    /// <summary>Inválido pela Regra 1: NIF com 2 dígitos e 15 anos.</summary>
+    // Regra 1
     public static readonly PedidoCredito Invalido = Aprovado with { Nif = "12", Idade = 15 };
 }

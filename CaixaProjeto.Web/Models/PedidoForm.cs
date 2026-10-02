@@ -3,9 +3,8 @@ using CaixaProjeto.Core.Dominio;
 namespace CaixaProjeto.Web.Models;
 
 /// <summary>
-/// Modelo do formulário. Existe à parte do PedidoCredito porque o Blazor precisa de
-/// propriedades com "set" para fazer binding; o PedidoCredito é imutável (só "init").
-/// A validação fica toda no motor (Regra 1), para o ecrã mostrar os mesmos motivos que a API.
+/// À parte do PedidoCredito porque o @bind do Blazor precisa de "set". Não valida nada: a validação
+/// é do motor (Regra 1), para o ecrã mostrar os mesmos motivos que a API.
 /// </summary>
 public class PedidoForm
 {
@@ -30,7 +29,6 @@ public class PedidoForm
         IncidentesCredito = IncidentesCredito
     };
 
-    /// <summary>Os quatro cenários da Tarefa 2 do enunciado, para preencher o formulário num clique.</summary>
     public static IReadOnlyDictionary<string, PedidoForm> Cenarios { get; } = new Dictionary<string, PedidoForm>
     {
         ["A"] = new() { Nif = "123456789", Idade = 35, RendimentoMensalLiquido = 2500, PrestacoesAtuais = 200, ValorPretendido = 10000, PrazoMeses = 60, SituacaoProfissional = Core.Dominio.SituacaoProfissional.Efetivo },

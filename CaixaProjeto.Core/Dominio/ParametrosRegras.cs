@@ -1,10 +1,6 @@
 namespace CaixaProjeto.Core.Dominio;
 
-/// <summary>
-/// Limites das regras de negócio, fora da lógica, para que a área de risco
-/// os possa ajustar por configuração (appsettings) sem alterar código.
-/// Os valores por omissão são os do enunciado.
-/// </summary>
+/// <summary>Limites das regras, configuráveis no appsettings.json; por omissão, os do enunciado.</summary>
 public sealed record ParametrosRegras
 {
     public int IdadeMinima { get; init; } = 18;                        // Regra 1

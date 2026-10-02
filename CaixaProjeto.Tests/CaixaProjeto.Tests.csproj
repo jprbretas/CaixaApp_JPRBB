@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CaixaProjeto.AppHost\CaixaProjeto.AppHost.csproj" />
-    <ProjectReference Include="..\CaixaProjeto.WebTests\CaixaProjeto.WebTests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

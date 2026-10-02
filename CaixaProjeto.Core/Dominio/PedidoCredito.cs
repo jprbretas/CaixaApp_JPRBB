@@ -1,10 +1,8 @@
 namespace CaixaProjeto.Core.Dominio;
 
 /// <summary>
-/// Dados de entrada de um pedido de crédito (secção "Dados de Entrada" do enunciado).
-/// O NIF é texto para não perder zeros à esquerda e para podermos validar os 9 dígitos.
-/// A situação profissional é opcional aqui para que um pedido incompleto
-/// chegue ao motor e seja classificado como inválido, em vez de rebentar antes.
+/// O NIF é texto para não perder zeros à esquerda. A situação profissional é opcional para um
+/// pedido incompleto chegar ao motor e ser classificado como inválido.
 /// </summary>
 public sealed record PedidoCredito
 {
@@ -18,9 +16,8 @@ public sealed record PedidoCredito
     public bool IncidentesCredito { get; init; }
 
     /// <summary>
-    /// Cópia do pedido com o NIF limpo: sem espaços, pontos nem hífenes, que é como as pessoas
-    /// o costumam escrever ("123 456 789", "123-456-789"). Letras e outros caracteres ficam,
-    /// para a Regra 1 os recusar.
+    /// Cópia com o NIF sem espaços, pontos nem hífenes ("123 456 789"). Letras ficam, para a
+    /// Regra 1 as recusar.
     /// </summary>
     public PedidoCredito Normalizado()
     {
@@ -34,7 +31,7 @@ public sealed record PedidoCredito
         {
             if (char.IsWhiteSpace(caracter) || caracter == '-' || caracter == '.')
             {
-                continue;   // separador: não entra no NIF
+                continue;
             }
             limpo.Append(caracter);
         }

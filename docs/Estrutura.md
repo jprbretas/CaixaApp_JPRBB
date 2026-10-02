@@ -87,6 +87,7 @@ Simulacoes       (Id, ClienteId → Clientes (pode ser NULL), Nif, Idade, Rendim
 | `docs/Estrutura.md` | Este guia dos ficheiros. |
 | `docs/Guia_de_Estudo.md` | Guia de estudo: o caminho de um pedido, uma tabela por ficheiro com uma linha por método, e os conceitos de C# e .NET para rever. |
 | `dotnet-tools.json` (na raiz) | As ferramentas do projeto: o `dotnet-ef` (migrações), na versão certa. Instala-se com `dotnet tool restore`. |
+| `docs/Apresentacao_PND2026.pptx` | Apresentação de cerca de 10 minutos que segue as 6 tarefas, com notas do orador em cada slide. |
 | `docs/Tarefa1_Analise_Funcional.md` | Resposta à Tarefa 1: interpretação das regras, ordem, casos ambíguos, perguntas ao negócio, user stories e o modelo de dados (com diagrama). |
 | `docs/Tarefa5_Melhoria_da_Solucao.md` | Resposta à Tarefa 5: melhorias técnicas, testes adicionais e dados para auditoria e reporting. |
 | `docs/Tarefa6_Resolucao_de_Problemas.md` | Resposta à Tarefa 6: o reporte "Não consigo pedir o crédito", com a informação em falta, como a obter, as hipóteses de erro e as equipas a envolver. |

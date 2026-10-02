@@ -3,10 +3,8 @@ using CaixaProjeto.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -14,7 +12,7 @@ builder.Services.AddOutputCache();
 
 builder.Services.AddHttpClient<CreditoApiClient>(client =>
     {
-        // "apiservice" é o nome dado à API no AppHost; "https+http" prefere HTTPS se existir.
+        // "apiservice" é o nome da API no AppHost; o service discovery do Aspire resolve o endereço real
         client.BaseAddress = new("https+http://apiservice");
     });
 

@@ -1,9 +1,6 @@
 namespace CaixaProjeto.ApiService.Services;
 
-/// <summary>
-/// Como correu a decisão de um analista. O Program.cs transforma cada valor
-/// na resposta HTTP certa (200, 400, 404 ou 409).
-/// </summary>
+/// <summary>O Program.cs traduz cada valor num código HTTP (200, 400, 404 ou 409).</summary>
 public enum ResultadoDecisao
 {
     Decidido,

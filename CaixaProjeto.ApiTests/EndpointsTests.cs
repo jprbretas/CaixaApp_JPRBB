@@ -11,17 +11,13 @@ using Microsoft.Data.Sqlite;
 
 namespace CaixaProjeto.ApiTests;
 
-/// <summary>
-/// Arranca a API verdadeira dentro dos testes (sem abrir portas na rede), com uma base de dados
-/// em memória em vez da caixa.db. Assim os testes nunca tocam nos dados do dia a dia.
-/// </summary>
+/// <summary>A API verdadeira, dentro do teste, com uma base de dados em memória: nunca toca na caixa.db.</summary>
 public sealed class ApiDeTeste : WebApplicationFactory<Program>
 {
-    // "Mode=Memory;Cache=Shared": base de dados em memória partilhada por todas as ligações com este nome.
-    // O nome é único, para cada ApiDeTeste ter a sua.
+    // Em memória e partilhada por todas as ligações com este nome (único por ApiDeTeste)
     private readonly string ligacao = $"Data Source=api-testes-{Guid.NewGuid()};Mode=Memory;Cache=Shared";
 
-    // A base de dados em memória desaparece quando fecha a última ligação; esta fica aberta até ao fim
+    // A base de dados em memória desaparece quando fecha a última ligação
     private readonly SqliteConnection manterAberta;
 
     public ApiDeTeste()
@@ -32,7 +28,7 @@ public sealed class ApiDeTeste : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Substitui a ConnectionStrings:caixa do appsettings.json (que aponta para a caixa.db)
+        // Em vez da caixa.db do appsettings.json
         builder.UseSetting("ConnectionStrings:caixa", ligacao);
     }
 
@@ -46,11 +42,7 @@ public sealed class ApiDeTeste : WebApplicationFactory<Program>
     }
 }
 
-/// <summary>
-/// Testes dos endpoints: o que a API responde por HTTP (códigos, JSON e mensagens de erro).
-/// IClassFixture: a API arranca uma vez para todos os testes desta classe, por isso cada teste
-/// cria os seus próprios pedidos e usa os números que recebe.
-/// </summary>
+/// <summary>A API arranca uma vez para a classe toda, por isso cada teste cria os seus pedidos.</summary>
 public sealed class EndpointsTests(ApiDeTeste api) : IClassFixture<ApiDeTeste>
 {
     private readonly HttpClient cliente = api.CreateClient();

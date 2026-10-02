@@ -5,10 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CaixaProjeto.ApiTests;
 
-/// <summary>
-/// Testes do PedidoService com uma base de dados SQLite verdadeira (em memória):
-/// o que fica gravado ao submeter e ao simular, a lista, o detalhe e a decisão do analista.
-/// </summary>
 public sealed class PedidoServiceTests : IDisposable
 {
     private readonly BaseDadosDeTeste bd = new();

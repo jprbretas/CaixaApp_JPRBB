@@ -68,7 +68,6 @@
                     </div>
 
                     <div class="mt-4">
-                        @* "Analisar" simula (fica registada como simulação); "Submeter pedido" cria o pedido *@
                         <button type="submit" class="btn btn-outline-primary" disabled="@aTrabalhar">Analisar</button>
                         <button type="button" class="btn btn-primary" disabled="@aTrabalhar" @onclick="SubmeterAsync">Submeter pedido</button>
                         <button type="button" class="btn btn-link" @onclick="Limpar">Limpar</button>
@@ -143,7 +142,6 @@
         numeroGravado = submetido.Numero;
     });
 
-    // Trata o "a trabalhar" e os erros de ligação da mesma forma para os dois botões
     private async Task ChamarApiAsync(Func<Task> chamada)
     {
         LimparResultado();
@@ -154,7 +152,6 @@
         }
         catch (HttpRequestException ex)
         {
-            // Sem ligação à API, ou a API respondeu com um erro: cada caso tem a sua mensagem
             LimparResultado();
             erro = MensagensErro.Para(ex);
         }

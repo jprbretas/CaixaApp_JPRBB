@@ -2,10 +2,8 @@ using CaixaProjeto.Core.Dominio;
 
 namespace CaixaProjeto.ApiService.Data;
 
-// Tabelas da base de dados. São classes simples com "set", porque o EF Core precisa de as preencher.
-// Ficam na API (e não no Core) porque são um detalhe de gravação, não regras de negócio.
+// As tabelas da base de dados. Ficam na API, e não no Core, porque são um detalhe de gravação.
 
-/// <summary>Um cliente, identificado pelo NIF. Permite saber quantos pedidos fez cada cliente (Tarefa 4).</summary>
 public class Cliente
 {
     public int Id { get; set; }
@@ -16,21 +14,16 @@ public class Cliente
     public List<Simulacao> Simulacoes { get; set; } = [];
 }
 
-/// <summary>
-/// Um pedido submetido: os dados de entrada, os indicadores e a decisão.
-/// DecisaoAutomatica é a do motor e nunca muda; EstadoAtual pode evoluir
-/// (por exemplo, um analista aprova um pedido que estava em análise manual).
-/// </summary>
+/// <summary>A DecisaoAutomatica (do motor) nunca muda; o EstadoAtual muda quando um analista decide.</summary>
 public class Pedido
 {
     public int Id { get; set; }
     public string Numero { get; set; } = "";          // ex.: 20260001 (ano + sequência)
 
-    // Pedidos inválidos também são gravados (para auditoria); podem não ter cliente se o NIF for inválido
+    // Os pedidos inválidos também são gravados (auditoria); sem NIF válido, não há cliente
     public int? ClienteId { get; set; }
     public Cliente? Cliente { get; set; }
 
-    // Dados de entrada
     public string? Nif { get; set; }
     public int Idade { get; set; }
     public decimal RendimentoMensalLiquido { get; set; }
@@ -40,13 +33,12 @@ public class Pedido
     public SituacaoProfissional? SituacaoProfissional { get; set; }
     public bool IncidentesCredito { get; set; }
 
-    // Indicadores (null quando o pedido é inválido)
+    // Indicadores: null quando o pedido é inválido
     public decimal? PrestacaoEstimada { get; set; }
     public decimal? TaxaEsforco { get; set; }
     public decimal? IdadeFinalContrato { get; set; }
-    public decimal? LimiteMontante { get; set; }        // Regra 5: gravado para o detalhe mostrar o limite que decidiu
+    public decimal? LimiteMontante { get; set; }        // gravado para o detalhe mostrar o limite que decidiu
 
-    // Decisão
     public Decisao DecisaoAutomatica { get; set; }
     public Decisao EstadoAtual { get; set; }
     public DateTime DataSubmissao { get; set; }
@@ -56,19 +48,16 @@ public class Pedido
 }
 
 /// <summary>
-/// Uma simulação (botão "Analisar"): o cliente viu o resultado, mas não submeteu o pedido.
-/// Fica numa tabela própria, e não em Pedidos, porque não é um pedido: não tem número,
-/// não tem estado e não vai ao analista. Serve para estatística (Tarefa 4: "pedido/simulação").
+/// Um clique em "Analisar". Tabela própria porque não é um pedido: não tem número, estado nem
+/// histórico. Serve para a Tarefa 4 ("pedido/simulação").
 /// </summary>
 public class Simulacao
 {
     public int Id { get; set; }
 
-    // Tal como nos pedidos, só há cliente quando o NIF é válido
     public int? ClienteId { get; set; }
     public Cliente? Cliente { get; set; }
 
-    // Dados de entrada
     public string? Nif { get; set; }
     public int Idade { get; set; }
     public decimal RendimentoMensalLiquido { get; set; }
@@ -78,12 +67,10 @@ public class Simulacao
     public SituacaoProfissional? SituacaoProfissional { get; set; }
     public bool IncidentesCredito { get; set; }
 
-    // Resultado que o cliente viu
     public Decisao Decisao { get; set; }
     public DateTime DataSimulacao { get; set; }
 }
 
-/// <summary>Um motivo da decisão automática (uma linha por regra que disparou).</summary>
 public class MotivoPedido
 {
     public int Id { get; set; }
@@ -94,8 +81,8 @@ public class MotivoPedido
 }
 
 /// <summary>
-/// Cada mudança de estado de um pedido: a decisão automática e, mais tarde, a do analista.
-/// É o que permite responder "quantos pedidos passaram de ANÁLISE MANUAL a APROVADO" (Tarefa 4).
+/// Cada mudança de estado. É daqui que sai "quantos pedidos passaram de ANÁLISE MANUAL a
+/// APROVADO" (Tarefa 4).
 /// </summary>
 public class HistoricoEstado
 {

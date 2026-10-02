@@ -7,20 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CaixaProjeto.ApiService.Services;
 
-/// <summary>
-/// Junta o motor (Core) e a base de dados: analisa um pedido e grava tudo numa só transação.
-/// </summary>
 public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider relogio)
 {
     public const string UtilizadorSistema = "sistema";
 
-    /// <summary>
-    /// Simulação (botão "Analisar"): analisa o pedido, regista a simulação e devolve o resultado.
-    /// Não cria pedido: não há número, estado nem histórico.
-    /// </summary>
+    /// <summary>Regista a simulação para estatística; não cria pedido.</summary>
     public async Task<ResultadoAnalise> SimularAsync(PedidoCredito dados, CancellationToken ct = default)
     {
-        // NIF limpo antes de gravar, para "123 456 789" e "123456789" serem o mesmo cliente
         dados = dados.Normalizado();
         var resultado = motor.Analisar(dados);
         var agora = relogio.GetUtcNow().UtcDateTime;
@@ -92,10 +85,6 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
         return new PedidoSubmetido(pedido.Numero, resultado);
     }
 
-    /// <summary>
-    /// Uma página da lista de pedidos, do mais recente para o mais antigo.
-    /// Se vier um estado, mostra só os pedidos que estão nesse estado.
-    /// </summary>
     public async Task<Pagina<PedidoResumo>> ListarAsync(Decisao? estado, int numeroPagina, int tamanhoPagina, CancellationToken ct = default)
     {
         // Proteção contra valores sem sentido vindos do URL (?pagina=0, ?tamanho=5000)
@@ -108,7 +97,6 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
             tamanhoPagina = 20;
         }
 
-        // A query só é enviada à BD no CountAsync / ToListAsync; até lá vamos só construindo-a
         IQueryable<Pedido> query = db.Pedidos;
         if (estado is not null)
         {
@@ -136,14 +124,9 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
         return new Pagina<PedidoResumo>(itens, total, numeroPagina, tamanhoPagina);
     }
 
-    /// <summary>
-    /// Tudo o que se sabe de um pedido, pelo número. Devolve null se o pedido não existir.
-    /// Os dados vêm da BD tal como foram gravados: o motor não volta a correr.
-    /// </summary>
+    /// <summary>O pedido tal como foi gravado (o motor não volta a correr), ou null se não existir.</summary>
     public async Task<PedidoDetalhe?> ObterAsync(string numero, CancellationToken ct = default)
     {
-        // Include: traz também as linhas das tabelas MotivosPedido e HistoricoEstados deste pedido.
-        // AsNoTracking: só vamos ler, por isso o EF não precisa de vigiar alterações.
         var pedido = await db.Pedidos
             .Include(p => p.Motivos)
             .Include(p => p.Historico)
@@ -167,13 +150,12 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
             IncidentesCredito = pedido.IncidentesCredito
         };
 
-        // Os motivos pela ordem em que foram gravados (a ordem das regras)
+        // A ordem de gravação é a ordem das regras
         var motivos = pedido.Motivos
             .OrderBy(m => m.Id)
             .Select(m => new Motivo(m.Regra, m.Descricao, m.Decisao))
             .ToList();
 
-        // Um pedido inválido não tem indicadores (ficaram a null na BD)
         Indicadores? indicadores = null;
         if (pedido.PrestacaoEstimada is not null
             && pedido.TaxaEsforco is not null
@@ -189,7 +171,6 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
 
         var resultado = new ResultadoAnalise(pedido.DecisaoAutomatica, motivos, indicadores);
 
-        // O histórico do mais antigo para o mais recente
         var historico = pedido.Historico
             .OrderBy(h => h.Data)
             .ThenBy(h => h.Id)
@@ -200,9 +181,8 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
     }
 
     /// <summary>
-    /// Decisão de um analista sobre um pedido em ANÁLISE MANUAL: passa a APROVADO ou RECUSADO.
-    /// A DecisaoAutomatica fica como estava (é a do motor); muda só o EstadoAtual,
-    /// e a mudança fica registada no histórico com o nome do analista e a observação.
+    /// Só para pedidos em ANÁLISE MANUAL. Muda o EstadoAtual e regista a mudança no histórico;
+    /// a DecisaoAutomatica não muda.
     /// </summary>
     public async Task<ResultadoDecisao> DecidirAsync(string numero, DecisaoAnalista decisao, CancellationToken ct = default)
     {
@@ -212,14 +192,12 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
             return ResultadoDecisao.DadosEmFalta;
         }
 
-        // Sem AsNoTracking: desta vez vamos alterar o pedido, e o EF tem de dar pela alteração
         var pedido = await db.Pedidos.FirstOrDefaultAsync(p => p.Numero == numero, ct);
         if (pedido is null)
         {
             return ResultadoDecisao.NaoEncontrado;
         }
 
-        // Só os pedidos em análise manual esperam por um analista
         if (pedido.EstadoAtual != Decisao.AnaliseManual)
         {
             return ResultadoDecisao.NaoAguardaAnalista;
@@ -246,7 +224,7 @@ public class PedidoService(CaixaDbContext db, MotorDecisao motor, TimeProvider r
         });
         pedido.EstadoAtual = novoEstado;
 
-        // Grava as duas coisas (novo estado e linha do histórico) na mesma transação
+        // O novo estado e a linha do histórico na mesma transação
         await db.SaveChangesAsync(ct);
         return ResultadoDecisao.Decidido;
     }

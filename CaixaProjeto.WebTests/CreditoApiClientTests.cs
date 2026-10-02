@@ -6,10 +6,7 @@ using CaixaProjeto.Web.Services;
 
 namespace CaixaProjeto.WebTests;
 
-/// <summary>
-/// Faz de API: em vez de enviar o pedido pela rede, devolve a resposta que o teste escolher
-/// (ou lança uma exceção, como quando a API está em baixo).
-/// </summary>
+/// <summary>Faz de API: devolve a resposta que o teste escolher, sem rede.</summary>
 public class ApiFalsa(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
 {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage pedido, CancellationToken cancellationToken)
@@ -18,10 +15,6 @@ public class ApiFalsa(Func<HttpRequestMessage, HttpResponseMessage> responder) :
     }
 }
 
-/// <summary>
-/// Testes do CreditoApiClient e das mensagens de erro das páginas: distinguir "a API não responde"
-/// de "a API respondeu com um erro", e dar ao utilizador o código para o suporte.
-/// </summary>
 public class CreditoApiClientTests
 {
     private static readonly PedidoCredito Pedido = new()
@@ -43,7 +36,7 @@ public class CreditoApiClientTests
         return new CreditoApiClient(httpClient);
     }
 
-    /// <summary>Uma resposta de erro como a API a envia: formato Problem Details, com o traceId.</summary>
+    // Uma resposta de erro como a API a envia (Problem Details, com o traceId)
     private static HttpResponseMessage Problema(HttpStatusCode estado, string? detalhe, string traceId = "00-abc123-01")
     {
         var campoDetalhe = "";

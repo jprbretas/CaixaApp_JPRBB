@@ -4,11 +4,7 @@ using Microsoft.Data.Sqlite;
 
 namespace CaixaProjeto.ApiTests;
 
-/// <summary>
-/// Testes das consultas da Tarefa 4: lê o ficheiro sql/Tarefa4_Consultas.sql tal como está,
-/// corre cada consulta sobre uma base de dados preparada e confere os resultados.
-/// Se alguém alterar o ficheiro ou o modelo de dados e partir uma consulta, estes testes falham.
-/// </summary>
+/// <summary>Corre o sql/Tarefa4_Consultas.sql tal como está, sobre dados preparados.</summary>
 public sealed class ConsultasTarefa4Tests : IDisposable
 {
     private readonly BaseDadosDeTeste bd = new();
@@ -26,10 +22,7 @@ public sealed class ConsultasTarefa4Tests : IDisposable
 
     // ---------- Ler e correr o ficheiro ----------
 
-    /// <summary>
-    /// As consultas do ficheiro, pela ordem em que aparecem. Tira as linhas de comentário
-    /// (que também podem ter ";") e separa o resto pelos ";".
-    /// </summary>
+    /// <summary>Tira as linhas de comentário (que também podem ter ";") e separa pelos ";".</summary>
     private static List<string> ConsultasDoFicheiro()
     {
         var caminho = Path.Combine(AppContext.BaseDirectory, "sql", "Tarefa4_Consultas.sql");
@@ -43,7 +36,6 @@ public sealed class ConsultasTarefa4Tests : IDisposable
             .ToList();
     }
 
-    /// <summary>Corre a consulta número N (1 a 5) e devolve as linhas, cada uma com as suas colunas.</summary>
     private List<object[]> Correr(int numero)
     {
         var consultas = ConsultasDoFicheiro();
@@ -77,7 +69,6 @@ public sealed class ConsultasTarefa4Tests : IDisposable
     }
 
     /// <summary>
-    /// Os mesmos dados que usei para testar as consultas à mão:
     ///   111111111  1 aprovado + 1 análise manual aprovada pelo analista
     ///   222222222  2 recusados pela Regra 3 (incidentes)
     ///   333333333  1 recusado pela Regra 4 (desempregado) + 1 pela Regra 6 (taxa de esforço)

@@ -2,10 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CaixaProjeto.ApiTests;
 
-/// <summary>
-/// Testes das migrações: confirmam que a pasta Data/Migrations acompanha o modelo (as classes em
-/// Entidades.cs e o CaixaDbContext) e que criam a base de dados que a aplicação espera.
-/// </summary>
 public sealed class MigracoesTests : IDisposable
 {
     private readonly BaseDadosDeTeste bd = new();
@@ -18,8 +14,7 @@ public sealed class MigracoesTests : IDisposable
     [Fact]
     public void NaoHaMudancasNoModeloSemMigracao()
     {
-        // Se alguém mudar uma entidade (por exemplo, acrescentar uma coluna) e se esquecer de criar
-        // a migração, este teste falha e diz o que fazer.
+        // Apanha uma entidade alterada sem a migração correspondente
         using var db = bd.NovoContexto();
 
         Assert.False(db.Database.HasPendingModelChanges(),
