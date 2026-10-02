@@ -35,6 +35,16 @@ O endereço do dashboard aparece no terminal.
 dotnet test CaixaProjeto.slnx
 ```
 
+**Consultar a base de dados** (precisa do Python, que já traz o SQLite):
+
+```bash
+python sql/correr_consultas.py
+```
+
+corre as 5 consultas da Tarefa 4 e mostra os resultados em tabelas (só leitura). Para escrever
+consultas à mão: `python -m sqlite3 CaixaProjeto.ApiService\caixa.db`, terminando cada uma com `;`
+e saindo com `.quit`.
+
 ---
 
 ## O que a aplicação faz

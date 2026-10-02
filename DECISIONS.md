@@ -55,9 +55,43 @@ preferência por .NET C#.
 - **.NET Aspire** para arrancar a API e a Web com um só F5, ligá-las entre si e ter um dashboard
   com os logs de cada serviço.
 - **SQLite** com **Entity Framework Core**: a base de dados é um ficheiro (`caixa.db`), não
-  precisa de instalação e é criada sozinha no primeiro arranque.
+  precisa de instalação e é criada e atualizada sozinha pelas migrações.
 - **xUnit** para os testes e **Bootstrap** (que vem com o modelo do Blazor) como base do aspeto,
   com uma identidade visual própria por cima (ver [Identidade visual](#identidade-visual)).
+
+### Porquê o .NET Aspire, e o que custou
+
+O Aspire é uma camada da Microsoft por cima do .NET para aplicações com várias peças (API, Web,
+bases de dados...): arranca-as juntas, liga-as umas às outras e mostra tudo num dashboard. Não
+substitui o ASP.NET nem o Blazor; organiza-os. Escolhi-o por ser o ponto de partida mais completo
+para uma solução com API e Web separadas.
+
+**O que ganhei de facto:**
+
+- **Arrancar tudo com um F5**, em vez de arrancar a API e a Web à mão, cada uma na sua porta.
+- **Service discovery:** a Web encontra a API pelo nome (`https+http://apiservice`), sem portas
+  escritas no código.
+- **Dashboard com logs e traces.** Foi o que tornou útil o código de erro mostrado na página
+  (passo 14): é o `traceId` que o suporte procura no dashboard. Uso-o nas respostas às Tarefas 5 e 6.
+- **Health checks e tentativas repetidas nas chamadas HTTP**, de origem, pelo `ServiceDefaults`.
+- **Um teste que arranca a aplicação inteira** como em produção (`CaixaProjeto.Tests`).
+
+**O que custou:**
+
+- **Mais peças para perceber:** dos 9 projetos, 2 (`AppHost` e `ServiceDefaults`) existem só por
+  causa do Aspire.
+- **Comportamentos que não se veem à primeira:** as tentativas repetidas fazem a mensagem de erro
+  demorar 15 a 20 segundos quando a API está em baixo, e o teste do modelo abre a `caixa.db`
+  verdadeira (ver [Limitações](#limitações-conhecidas)).
+- **Para uma aplicação deste tamanho, é mais do que o necessário.** Um projeto Blazor sozinho, com
+  o `Core` e os testes, resolvia o enunciado.
+
+**Em resumo:** para um exercício que pede "uma solução simples e organizada", o Aspire está no
+limite do exagero. Mantive-o porque deu coisas que usei a sério (o dashboard, o código de erro, o
+teste da aplicação inteira) e porque a estrutura acompanha bem a forma como a solução cresceria em
+produção, onde a API e a Web podem correr e escalar em separado. Se tirasse o Aspire, o `Core`, a
+API, a Web e os testes ficavam iguais; perdia-se o arranque com um F5, o service discovery e o
+dashboard.
 
 ---
 
@@ -420,7 +454,9 @@ Verificado no browser em computador e em telemóvel (375 px de largura, sem desl
 ## Consultas da Tarefa 4
 
 As cinco consultas estão em [sql/Tarefa4_Consultas.sql](sql/Tarefa4_Consultas.sql), escritas para
-SQLite e comentadas uma a uma.
+SQLite e comentadas uma a uma. Para as correr sobre a `caixa.db` sem instalar nada, o script
+[sql/correr_consultas.py](sql/correr_consultas.py) mostra os resultados em tabelas, abrindo a base de
+dados só para leitura (`python sql/correr_consultas.py`).
 
 **Porquê SQL escrito à mão, se a aplicação não tem nenhum.** A aplicação acede à base de dados só
 através do Entity Framework Core, um ORM: o código é C# (LINQ), verificado pelo compilador, e é o
@@ -503,8 +539,8 @@ Tarefa 6), a API respondeu 500 e a página mostrou a segunda mensagem, com o có
 
 ## Estilo do código
 
-- **As regras estão escritas na forma longa (if / else)**, de propósito, para serem fáceis de ler
-  e comparar com o enunciado, mesmo por quem não programa em C# todos os dias.
+- **Cada regra é uma condição explícita** (`if` / `else` com `return`), para se ler lado a lado
+  com o texto do enunciado e ser fácil de rever por quem conhece o negócio.
 - **Nomes e comentários em português**, na linguagem do enunciado (Pedido, Regra, TaxaEsforco).
 - **Uma responsabilidade por classe:** uma classe por regra, um serviço para juntar motor e base de
   dados, um cliente HTTP na Web.
@@ -525,7 +561,6 @@ num repositório de trabalho e chegaram a este repositório no commit "Primeira 
 | – | Primeira página (Novo pedido) e endpoint de simulação; link "Abrir a aplicação" no dashboard do Aspire. |
 | 3 | Testes unitários do motor: cenários A a D, Regra 1, valores-limite e prioridades. |
 | 4 | Base de dados SQLite: tabelas, gravação dos pedidos e botão Submeter pedido. |
-| – | Regras reescritas na forma longa (if / else), sem mudar o comportamento. |
 | 5 | Página com a lista de pedidos, paginada e com filtro por estado. |
 | 6 | Detalhe do pedido: dados, análise e histórico. |
 | 7 | Decisão do analista sobre os pedidos em análise manual. |
